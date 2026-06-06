@@ -82,6 +82,7 @@ export function AppClient() {
             fitScore: updated.notes?.fitScore ?? 0,
             dialScore: updated.notes?.dialScore ?? 0,
             overallNotes: updated.notes?.overallNotes ?? "",
+            variantPrefs: updated.notes?.variantPreferences ?? null,
           }),
         });
       } catch (err) {

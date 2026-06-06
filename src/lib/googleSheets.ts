@@ -40,12 +40,13 @@ async function client() {
 // Columns  : A=id  B=rank  C=tier  D=fitScore  E=dialScore  F=overallNotes
 //            G=wristPhotoUrl  H=brand  I=name  J=reference  K=caseSize
 //            L=movement  M=powerReserve  N=image  O=recommendation
+//            P=variantPrefs (JSON)
 const TAB = "JacksWatch";
-const RANGE = `${TAB}!A:O`;
+const RANGE = `${TAB}!A:P`;
 const HEADERS = [
   "id", "rank", "tier", "fitScore", "dialScore", "overallNotes",
   "wristPhotoUrl", "brand", "name", "reference", "caseSize",
-  "movement", "powerReserve", "image", "recommendation",
+  "movement", "powerReserve", "image", "recommendation", "variantPrefs",
 ];
 
 
@@ -67,6 +68,7 @@ export interface SheetRow {
   powerReserve: string;
   image: string;
   recommendation: string;
+  variantPrefs: string;
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -76,12 +78,13 @@ async function ensureHeaders(
 ): Promise<void> {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId(),
-    range: `${TAB}!A1:O1`,
+    range: `${TAB}!A1:P1`,
   });
-  if (res.data.values?.[0]?.[0] !== "id") {
+  const headerRow = res.data.values?.[0] ?? [];
+  if (headerRow[0] !== "id" || headerRow[15] !== "variantPrefs") {
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId(),
-      range: `${TAB}!A1:O1`,
+      range: `${TAB}!A1:P1`,
       valueInputOption: "RAW",
       requestBody: { values: [HEADERS] },
     });
@@ -118,6 +121,7 @@ function rowToSheetRow(row: string[]): SheetRow {
     powerReserve: row[12] ?? "",
     image: row[13] ?? "",
     recommendation: row[14] ?? "",
+    variantPrefs: row[15] ?? "",
   };
 }
 
@@ -235,6 +239,7 @@ export async function upsertNotes(
     fitScore: number;
     dialScore: number;
     overallNotes: string;
+    variantPrefs?: string;
   }
 ): Promise<void> {
   const sheets = await client();
@@ -243,14 +248,21 @@ export async function upsertNotes(
 
   if (rowIdx === null) return; // watch must exist first
 
-  // Update C:F only — leave rank (B), wristPhotoUrl (G), and catalog fields (H:O) untouched
-  await sheets.spreadsheets.values.update({
+  await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId: sheetId(),
-    range: `${TAB}!C${rowIdx}:F${rowIdx}`,
-    valueInputOption: "RAW",
     requestBody: {
-      values: [
-        [data.tier ?? "", data.fitScore, data.dialScore, data.overallNotes],
+      valueInputOption: "RAW",
+      data: [
+        // C:F — tier, scores, notes
+        {
+          range: `${TAB}!C${rowIdx}:F${rowIdx}`,
+          values: [[data.tier ?? "", data.fitScore, data.dialScore, data.overallNotes]],
+        },
+        // P — variant preferences JSON
+        {
+          range: `${TAB}!P${rowIdx}`,
+          values: [[data.variantPrefs ?? ""]],
+        },
       ],
     },
   });

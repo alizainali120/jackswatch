@@ -9,28 +9,35 @@ export async function GET() {
     const rows = await getAllRows();
 
     const watches = rows
-      .map((row) => ({
-        id: row.id,
-        brand: row.brand,
-        name: row.name,
-        reference: row.reference,
-        caseSize: row.caseSize,
-        movement: row.movement,
-        powerReserve: row.powerReserve,
-        image: row.image,
-        recommendation: row.recommendation,
-        rank: row.rank || 99,
-        tier: row.tier || undefined,
-        notes:
-          row.fitScore > 0 || row.dialScore > 0 || row.overallNotes || row.wristPhotoUrl
+      .map((row) => {
+        let variantPreferences: Record<string, "prefer" | "pass"> | undefined;
+        if (row.variantPrefs) {
+          try { variantPreferences = JSON.parse(row.variantPrefs); } catch { /* ignore */ }
+        }
+        const hasNotes = row.fitScore > 0 || row.dialScore > 0 || row.overallNotes || row.wristPhotoUrl || variantPreferences;
+        return {
+          id: row.id,
+          brand: row.brand,
+          name: row.name,
+          reference: row.reference,
+          caseSize: row.caseSize,
+          movement: row.movement,
+          powerReserve: row.powerReserve,
+          image: row.image,
+          recommendation: row.recommendation,
+          rank: row.rank || 99,
+          tier: row.tier || undefined,
+          notes: hasNotes
             ? {
                 fitScore: row.fitScore,
                 dialScore: row.dialScore,
                 overallNotes: row.overallNotes,
                 wristPhoto: row.wristPhotoUrl || undefined,
+                variantPreferences,
               }
             : undefined,
-      }))
+        };
+      })
       .sort((a, b) => a.rank - b.rank);
 
     return NextResponse.json(watches);

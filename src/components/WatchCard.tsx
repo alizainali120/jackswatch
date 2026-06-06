@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { Watch, WatchTier, WatchVariant } from "@/types/watch";
+import type { Watch, WatchTier, WatchVariant, VariantPreference } from "@/types/watch";
 import {
   cn,
   TIER_COLORS,
   TIER_LABELS,
   getBrandGradient,
 } from "@/lib/utils";
-import { StickyNote, Trophy, Star, ExternalLink } from "lucide-react";
+import { StickyNote, Trophy, Star, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 import { WATCH_VARIANTS } from "@/lib/watchData";
 
 interface Props {
@@ -41,30 +41,60 @@ function ScorePip({ label, value }: { label: string; value: number }) {
   );
 }
 
-function VariantSection({ variants, watchId }: { variants: WatchVariant[]; watchId: string }) {
+function VariantSection({
+  variants,
+  watchId,
+  preferences,
+  onPreferenceChange,
+}: {
+  variants: WatchVariant[];
+  watchId: string;
+  preferences?: Record<string, VariantPreference>;
+  onPreferenceChange: (prefs: Record<string, VariantPreference>) => void;
+}) {
   const group = WATCH_VARIANTS[watchId];
   const defaultId = group?.defaultVariantId ?? variants[0].id;
   const [activeId, setActiveId] = useState(defaultId);
   const active = variants.find((v) => v.id === activeId) ?? variants[0];
+  const activePref = preferences?.[active.id];
+
+  function setPref(pref: VariantPreference) {
+    const updated = { ...(preferences ?? {}) };
+    if (updated[active.id] === pref) {
+      delete updated[active.id]; // toggle off
+    } else {
+      updated[active.id] = pref;
+    }
+    onPreferenceChange(updated);
+  }
 
   return (
     <div className="space-y-2.5">
       {/* Variant tab pills */}
       <div className="flex gap-1.5">
-        {variants.map((v) => (
-          <button
-            key={v.id}
-            onClick={() => setActiveId(v.id)}
-            className={cn(
-              "text-[10px] px-2.5 py-1 rounded-full border transition-all font-medium",
-              activeId === v.id
-                ? "bg-[#b8973a]/15 border-[#b8973a]/40 text-[#b8973a]"
-                : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-            )}
-          >
-            {v.label}
-          </button>
-        ))}
+        {variants.map((v) => {
+          const pref = preferences?.[v.id];
+          return (
+            <button
+              key={v.id}
+              onClick={() => setActiveId(v.id)}
+              className={cn(
+                "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border transition-all font-medium",
+                activeId === v.id
+                  ? "bg-[#b8973a]/15 border-[#b8973a]/40 text-[#b8973a]"
+                  : pref === "prefer"
+                  ? "border-emerald-800/50 text-emerald-500/80 hover:border-emerald-700 hover:text-emerald-400"
+                  : pref === "pass"
+                  ? "border-red-900/40 text-red-500/50 hover:border-red-800 hover:text-red-400"
+                  : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+              )}
+            >
+              {v.label}
+              {pref === "prefer" && <span className="text-emerald-500 text-[8px]">★</span>}
+              {pref === "pass" && <span className="text-red-500/60 text-[8px]">✕</span>}
+            </button>
+          );
+        })}
       </div>
 
       {/* Selected variant details */}
@@ -109,6 +139,35 @@ function VariantSection({ variants, watchId }: { variants: WatchVariant[]; watch
             </li>
           ))}
         </ul>
+
+        {/* Preference buttons */}
+        <div className="flex items-center gap-2 pt-1 border-t border-zinc-800/60">
+          <span className="text-[9px] text-zinc-600 uppercase tracking-widest">Prefer?</span>
+          <button
+            onClick={() => setPref("prefer")}
+            className={cn(
+              "flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all",
+              activePref === "prefer"
+                ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                : "border-zinc-800 text-zinc-600 hover:border-emerald-800 hover:text-emerald-500"
+            )}
+          >
+            <ThumbsUp size={9} />
+            Yes
+          </button>
+          <button
+            onClick={() => setPref("pass")}
+            className={cn(
+              "flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all",
+              activePref === "pass"
+                ? "bg-red-500/15 border-red-500/40 text-red-400"
+                : "border-zinc-800 text-zinc-600 hover:border-red-900 hover:text-red-500"
+            )}
+          >
+            <ThumbsDown size={9} />
+            No
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -214,7 +273,17 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
 
         {/* Variant picker — replaces the flat ref + specs row */}
         {hasVariants ? (
-          <VariantSection variants={watch.variants!} watchId={watch.id} />
+          <VariantSection
+            variants={watch.variants!}
+            watchId={watch.id}
+            preferences={watch.notes?.variantPreferences}
+            onPreferenceChange={(prefs) =>
+              onUpdate({
+                ...watch,
+                notes: { ...(watch.notes ?? { fitScore: 0, dialScore: 0, overallNotes: "" }), variantPreferences: prefs },
+              })
+            }
+          />
         ) : (
           /* Flat specs row for non-variant watches */
           <div

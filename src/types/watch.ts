@@ -1,10 +1,13 @@
 export type WatchTier = "must-have" | "consider" | "maybe" | "pass";
 
+export type VariantPreference = "prefer" | "pass";
+
 export interface WatchNotes {
   fitScore: number;
   dialScore: number;
   overallNotes: string;
   wristPhoto?: string;
+  variantPreferences?: Record<string, VariantPreference>;
 }
 
 export interface WatchVariant {

@@ -14,6 +14,7 @@ export async function POST(
       fitScore: Number(body.fitScore) || 0,
       dialScore: Number(body.dialScore) || 0,
       overallNotes: String(body.overallNotes ?? ""),
+      variantPrefs: body.variantPrefs ? JSON.stringify(body.variantPrefs) : "",
     });
 
     return NextResponse.json({ ok: true });
