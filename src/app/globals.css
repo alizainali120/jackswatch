@@ -2,8 +2,13 @@
 
 @theme {
   --color-gold: #b8973a;
-  --color-gold-light: #d4aa4d;
+  --color-gold-bright: #C9A84C;
   --color-gold-dim: #7a6428;
+  --color-champagne: #F5E6C8;
+  --color-ivory: #FAF6EE;
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-mono: var(--font-dm-mono), "DM Mono", ui-monospace, monospace;
+  --font-sans: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
 }
 
 :root {
@@ -15,17 +20,16 @@
 }
 
 body {
-  background-color: #0c0c0d;
-  color: #f4f4f5;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #000;
+  color: #FAF6EE;
+  font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+/* Scrollbar: hidden, scroll still works */
+::-webkit-scrollbar { display: none; }
+html { scrollbar-width: none; }
 
 /* ---- Score slider ---- */
 .score-slider {
@@ -51,7 +55,7 @@ body {
 /* Select options dark */
 select option {
   background-color: #18181b;
-  color: #e4e4e7;
+  color: #FAF6EE;
 }
 
 /* ---- Print styles ---- */
@@ -67,17 +71,14 @@ select option {
     font-size: 12pt;
   }
 
-  /* Hide everything not meant for print */
   .no-print {
     display: none !important;
   }
 
-  /* Show print-only elements */
   .print-only {
     display: block !important;
   }
 
-  /* Reset card backgrounds */
   .print-card {
     background: #fff !important;
     border: 1px solid #ccc !important;

@@ -121,7 +121,7 @@ export function AppClient() {
   // ── Render ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0c0c0d]">
+      <div className="flex items-center justify-center min-h-screen bg-black">
         <div className="flex items-center gap-3 text-zinc-600">
           <Loader2 size={16} className="animate-spin" />
           <span className="text-xs tracking-widest uppercase">Loading</span>
@@ -131,9 +131,9 @@ export function AppClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0d] text-zinc-100">
+    <div className="min-h-screen bg-black text-[#FAF6EE]">
       {/* ── Header ── */}
-      <header className="no-print sticky top-0 z-30 bg-[#0c0c0d]/95 backdrop-blur-sm border-b border-zinc-800/50">
+      <header className="no-print sticky top-0 z-30 bg-black/95 backdrop-blur-sm border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-full bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center">
@@ -212,6 +212,22 @@ export function AppClient() {
         </div>
       </div>
 
+      {/* ── Hero ── */}
+      <div className="text-center pt-10 pb-8 border-b border-[#b8973a]/10">
+        <h1
+          className="text-5xl sm:text-7xl font-light tracking-[0.25em] uppercase text-[#FAF6EE]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          The Collection
+        </h1>
+        <p
+          className="mt-3 text-[10px] tracking-[0.25em] text-[#F5E6C8]/50"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          A curated selection.
+        </p>
+      </div>
+
       {/* ── Main layout ── */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <div className="lg:grid lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_300px] lg:gap-6 lg:items-start">
@@ -280,6 +296,14 @@ export function AppClient() {
           nextRank={watches.length + 1}
         />
       )}
+
+      {/* ── Floating final ranking button ── */}
+      <Link
+        href="/share"
+        className="no-print fixed bottom-6 right-6 z-20 px-5 py-3 bg-[#F5E6C8] text-black text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#C9A84C] transition-colors duration-200"
+      >
+        Final Ranking
+      </Link>
     </div>
   );
 }

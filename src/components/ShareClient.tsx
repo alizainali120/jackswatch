@@ -41,14 +41,14 @@ export function ShareClient() {
 
   if (!loaded) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0c0c0d]">
+      <div className="flex items-center justify-center min-h-screen bg-black">
         <p className="text-zinc-600 text-sm">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0d] text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       {/* Nav — hidden on print */}
       <div className="no-print max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link
@@ -96,7 +96,7 @@ export function ShareClient() {
             </p>
             <p className="text-xs text-zinc-500 leading-relaxed">
               Scan this QR code to open Jack&apos;s Watch Guide on any device.
-              Rankings and notes are saved locally.
+              Rankings and notes sync live via Google Sheets.
             </p>
             <p className="text-[10px] text-zinc-700 mt-2 font-mono break-all">
               {shareUrl}

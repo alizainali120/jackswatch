@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { DEFAULT_WATCHES } from "@/lib/watchData";
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -46,36 +47,6 @@ const HEADERS = [
   "movement", "powerReserve", "image", "recommendation",
 ];
 
-const SEED_WATCHES = [
-  {
-    id: "rolex-sub-126610ln",
-    brand: "Rolex", name: "Submariner Date", reference: "126610LN",
-    caseSize: "41mm", movement: "Cal. 3235", powerReserve: "70 hours",
-    image: "", recommendation: "The gold standard for a reason. Nothing else has this combination of instant recognizability and genuine wearability.",
-    rank: 1,
-  },
-  {
-    id: "rolex-gmt-126710blnr",
-    brand: "Rolex", name: "GMT-Master II", reference: "126710BLNR",
-    caseSize: "40mm", movement: "Cal. 3285", powerReserve: "70 hours",
-    image: "", recommendation: "The Batman. Harder to get than the Sub, but worth understanding why people love it.",
-    rank: 2,
-  },
-  {
-    id: "omega-seamaster-diver-300m",
-    brand: "Omega", name: "Seamaster Diver 300M", reference: "210.30.42.20.01.001",
-    caseSize: "42mm", movement: "Cal. 8800", powerReserve: "55 hours",
-    image: "", recommendation: "Bond's watch. The wave-pattern dial is genuinely beautiful in person.",
-    rank: 3,
-  },
-  {
-    id: "tudor-blackbay58",
-    brand: "Tudor", name: "Black Bay 58", reference: "79030N",
-    caseSize: "39mm", movement: "Cal. MT5402", powerReserve: "70 hours",
-    image: "", recommendation: "The smart buy. 39mm is the magic number — wears vintage-small in the best possible way.",
-    rank: 4,
-  },
-];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -177,13 +148,23 @@ export async function getAllRows(): Promise<SheetRow[]> {
   const rows = res.data.values ?? [];
 
   if (rows.length <= 1) {
+    const seedRows = DEFAULT_WATCHES.map((w) =>
+      watchToRow({
+        id: w.id, rank: w.rank, tier: "", fitScore: 0,
+        dialScore: 0, overallNotes: "", wristPhotoUrl: "",
+        brand: w.brand, name: w.name, reference: w.reference,
+        caseSize: w.caseSize, movement: w.movement,
+        powerReserve: w.powerReserve, image: w.image,
+        recommendation: w.recommendation,
+      })
+    );
     await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId(),
       range: RANGE,
       valueInputOption: "RAW",
-      requestBody: { values: SEED_WATCHES.map(watchToRow) },
+      requestBody: { values: seedRows },
     });
-    return SEED_WATCHES.map((w) => rowToSheetRow(watchToRow(w)));
+    return seedRows.map(rowToSheetRow);
   }
 
   return rows.slice(1).map(rowToSheetRow).filter((r) => r.id !== "");
@@ -206,16 +187,21 @@ export async function upsertWatch(watch: {
       requestBody: { values: [watchToRow({ ...watch, tier: "", fitScore: 0, dialScore: 0, overallNotes: "", wristPhotoUrl: "" })] },
     });
   } else {
-    await sheets.spreadsheets.values.update({
+    // Update rank (B) and catalog fields (H:O) only — never touch scores/notes/tier in C:G
+    await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: sheetId(),
-      range: `${TAB}!B${rowIdx}:O${rowIdx}`,
-      valueInputOption: "RAW",
       requestBody: {
-        values: [[
-          String(watch.rank), "", "0", "0", "", "",
-          watch.brand, watch.name, watch.reference, watch.caseSize,
-          watch.movement, watch.powerReserve, watch.image, watch.recommendation,
-        ]],
+        valueInputOption: "RAW",
+        data: [
+          { range: `${TAB}!B${rowIdx}`, values: [[String(watch.rank)]] },
+          {
+            range: `${TAB}!H${rowIdx}:O${rowIdx}`,
+            values: [[
+              watch.brand, watch.name, watch.reference, watch.caseSize,
+              watch.movement, watch.powerReserve, watch.image, watch.recommendation,
+            ]],
+          },
+        ],
       },
     });
   }

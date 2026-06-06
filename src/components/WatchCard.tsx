@@ -48,7 +48,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
   const isRanked = (watch.rank ?? 0) > 0;
 
   return (
-    <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors group">
+    <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-[#F5E6C8]/20 transition-colors duration-200 group">
       {/* ---- Photo ---- */}
       <div
         className={cn(
@@ -119,16 +119,25 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           <p className="text-[9px] tracking-[0.25em] uppercase text-zinc-600 mb-0.5 font-medium">
             {watch.brand}
           </p>
-          <h3 className="text-sm font-semibold text-zinc-100 leading-tight">
+          <h3
+            className="text-base font-light tracking-wide text-[#FAF6EE] leading-tight"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             {watch.name}
           </h3>
-          <p className="text-[10px] text-zinc-600 font-mono mt-0.5">
+          <p
+            className="text-[10px] text-zinc-600 mt-0.5"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
             Ref. {watch.reference}
           </p>
         </div>
 
         {/* Key specs */}
-        <div className="flex items-center gap-0 text-[10px] text-zinc-500">
+        <div
+          className="flex items-center gap-0 text-[10px] text-zinc-500"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
           <span>{watch.caseSize}</span>
           <span className="mx-1.5 text-zinc-700">·</span>
           <span>{watch.movement}</span>

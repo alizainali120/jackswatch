@@ -6,14 +6,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(price: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(price);
-}
-
 export const TIER_LABELS: Record<WatchTier, string> = {
   "must-have": "Must Have",
   consider: "Strong Consider",
@@ -44,7 +36,7 @@ export function getBrandGradient(brand: string): string {
 }
 
 export function generateId(): string {
-  return `watch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  return crypto.randomUUID();
 }
 
 export function scoreLabel(score: number): string {
