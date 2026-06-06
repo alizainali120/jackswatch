@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { loadWatches } from "@/lib/storage";
 import type { Watch } from "@/types/watch";
 import { cn, TIER_LABELS, TIER_COLORS } from "@/lib/utils";
 import { ArrowLeft, Printer, Star, Trophy } from "lucide-react";
@@ -14,11 +13,14 @@ export function ShareClient() {
   const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
-    const ws = loadWatches();
-    const sorted = [...ws].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
-    setWatches(sorted);
     setShareUrl(window.location.href.replace(/\/share\/?$/, ""));
-    setLoaded(true);
+    fetch("/api/watches")
+      .then((r) => r.json())
+      .then((data: Watch[]) => {
+        setWatches([...data].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99)));
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
   }, []);
 
   const ratedWatches = watches.filter(

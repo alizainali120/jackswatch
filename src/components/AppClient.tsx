@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Watch } from "@/types/watch";
-import { loadWatches, saveWatches } from "@/lib/storage";
 import { WatchGrid } from "@/components/WatchGrid";
 import { RankingView } from "@/components/RankingView";
 import { NotesPanel } from "@/components/NotesPanel";
@@ -14,6 +13,8 @@ import {
   Plus,
   Watch as WatchIcon,
   Share2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,35 +25,96 @@ export function AppClient() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("grid");
   const [notesPanelWatch, setNotesPanelWatch] = useState<Watch | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
+  // Debounce timers per watch id — for notes saves
+  const notesTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // ── Load from API ───────────────────────────────────────────────────────────
   useEffect(() => {
-    setWatches(loadWatches());
-    setLoaded(true);
+    fetch("/api/watches")
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json() as Promise<Watch[]>;
+      })
+      .then((data) => {
+        setWatches(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Couldn't reach the server. Check your connection.");
+        setLoading(false);
+      });
   }, []);
 
-  useEffect(() => {
-    if (loaded) saveWatches(watches);
-  }, [watches, loaded]);
-
+  // ── Optimistic update + debounced API save ──────────────────────────────────
   const updateWatch = useCallback((updated: Watch) => {
-    setWatches((prev) => prev.map((w) => (w.id === updated.id ? updated : w)));
-    setNotesPanelWatch((prev) => (prev?.id === updated.id ? updated : prev));
+    setWatches((prev) =>
+      prev.map((w) => (w.id === updated.id ? updated : w))
+    );
+    setNotesPanelWatch((prev) =>
+      prev?.id === updated.id ? updated : prev
+    );
+
+    // Debounce the API call 1.5 s after last change
+    const existing = notesTimers.current.get(updated.id);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(async () => {
+      notesTimers.current.delete(updated.id);
+      setSaving(true);
+      try {
+        await fetch(`/api/watches/${updated.id}/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tier: updated.tier ?? "",
+            fitScore: updated.notes?.fitScore ?? 0,
+            dialScore: updated.notes?.dialScore ?? 0,
+            overallNotes: updated.notes?.overallNotes ?? "",
+          }),
+        });
+      } catch (err) {
+        console.error("Notes save failed:", err);
+      } finally {
+        setSaving(false);
+      }
+    }, 1500);
+
+    notesTimers.current.set(updated.id, timer);
   }, []);
 
+  // ── Ranking reorder — immediate API save ────────────────────────────────────
+  const reorderWatches = useCallback(async (reordered: Watch[]) => {
+    setWatches(reordered);
+    setSaving(true);
+    try {
+      await fetch("/api/watches/rank", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: reordered.map((w) => w.id) }),
+      });
+    } catch (err) {
+      console.error("Rank save failed:", err);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  // ── Local-only add (session only — not persisted) ───────────────────────────
   const addWatch = useCallback((watch: Watch) => {
     setWatches((prev) => [...prev, watch]);
   }, []);
 
-  const reorderWatches = useCallback((reordered: Watch[]) => {
-    setWatches(reordered);
-  }, []);
-
-  if (!loaded) {
+  // ── Render ──────────────────────────────────────────────────────────────────
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0c0c0d]">
         <div className="flex items-center gap-3 text-zinc-600">
-          <WatchIcon size={16} />
+          <Loader2 size={16} className="animate-spin" />
           <span className="text-xs tracking-widest uppercase">Loading</span>
         </div>
       </div>
@@ -61,28 +123,27 @@ export function AppClient() {
 
   return (
     <div className="min-h-screen bg-[#0c0c0d] text-zinc-100">
-      {/* ---- Header ---- */}
+      {/* ── Header ── */}
       <header className="no-print sticky top-0 z-30 bg-[#0c0c0d]/95 backdrop-blur-sm border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-full bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center">
               <WatchIcon size={11} className="text-[#b8973a]" />
             </div>
-            <div className="hidden sm:block">
-              <span className="text-xs font-semibold tracking-widest uppercase text-zinc-100">
-                Jack&apos;s Watch Guide
-              </span>
-            </div>
-            <div className="sm:hidden">
-              <span className="text-xs font-semibold tracking-widest uppercase text-zinc-100">
-                Jack&apos;s Watches
-              </span>
-            </div>
+            <span className="text-xs font-semibold tracking-widest uppercase text-zinc-100">
+              Jack&apos;s Watch Guide
+            </span>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Saving indicator */}
+            {saving && (
+              <span className="hidden sm:flex items-center gap-1 text-[10px] text-zinc-600">
+                <Loader2 size={10} className="animate-spin" />
+                Saving…
+              </span>
+            )}
+
             <Link
               href="/share"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700"
@@ -102,8 +163,18 @@ export function AppClient() {
         </div>
       </header>
 
-      {/* ---- Mobile tab bar ---- */}
-      <div className="no-print lg:hidden px-4 pt-4 pb-0">
+      {/* ── Error banner ── */}
+      {error && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+            <AlertCircle size={13} />
+            {error}
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile tab bar ── */}
+      <div className="no-print lg:hidden px-4 pt-4">
         <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
           <button
             onClick={() => setMobileTab("grid")}
@@ -132,16 +203,11 @@ export function AppClient() {
         </div>
       </div>
 
-      {/* ---- Main layout ---- */}
+      {/* ── Main layout ── */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         <div className="lg:grid lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_300px] lg:gap-6 lg:items-start">
-          {/* Watch grid */}
-          <div
-            className={cn(
-              mobileTab === "grid" ? "block" : "hidden",
-              "lg:block"
-            )}
-          >
+          {/* Grid */}
+          <div className={cn(mobileTab === "grid" ? "block" : "hidden", "lg:block")}>
             <WatchGrid
               watches={watches}
               onNotesClick={setNotesPanelWatch}
@@ -149,14 +215,13 @@ export function AppClient() {
             />
           </div>
 
-          {/* Ranking sidebar */}
+          {/* Sidebar */}
           <div
             className={cn(
               mobileTab === "rank" ? "block" : "hidden",
               "lg:block lg:sticky lg:top-20"
             )}
           >
-            {/* Desktop share link inside sidebar */}
             <div className="hidden lg:flex items-center justify-between mb-3">
               <span className="text-[10px] uppercase tracking-widest text-zinc-600">
                 {watches.length} watches
@@ -176,7 +241,6 @@ export function AppClient() {
               onNotesClick={setNotesPanelWatch}
             />
 
-            {/* Mobile share link */}
             <div className="mt-4 lg:hidden">
               <Link
                 href="/share"
@@ -190,7 +254,7 @@ export function AppClient() {
         </div>
       </main>
 
-      {/* ---- Notes panel ---- */}
+      {/* ── Notes panel ── */}
       {notesPanelWatch && (
         <NotesPanel
           watch={notesPanelWatch}
@@ -199,7 +263,7 @@ export function AppClient() {
         />
       )}
 
-      {/* ---- Add watch modal ---- */}
+      {/* ── Add watch ── */}
       {addModalOpen && (
         <AddWatchModal
           onClose={() => setAddModalOpen(false)}

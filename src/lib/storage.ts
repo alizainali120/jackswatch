@@ -1,30 +1,7 @@
-import type { Watch } from "@/types/watch";
-import { DEFAULT_WATCHES } from "./watchData";
-
-const STORAGE_KEY = "jackswatch_v2";
-
-export function loadWatches(): Watch[] {
-  if (typeof window === "undefined") return DEFAULT_WATCHES;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_WATCHES;
-    const parsed = JSON.parse(raw) as Watch[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_WATCHES;
-    return parsed;
-  } catch {
-    return DEFAULT_WATCHES;
-  }
-}
-
-export function saveWatches(watches: Watch[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(watches));
-  } catch (e) {
-    console.warn("localStorage full — try removing wrist photos.", e);
-  }
-}
-
+/**
+ * Client-side image compression — used before uploading to the photo API.
+ * Resizes to max 900px and encodes as JPEG @ 78% quality.
+ */
 export async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

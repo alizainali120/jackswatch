@@ -5,7 +5,7 @@ import type { Watch, WatchNotes } from "@/types/watch";
 import { cn, getBrandGradient } from "@/lib/utils";
 import { compressImage } from "@/lib/storage";
 import { ScoreSlider } from "@/components/ScoreSlider";
-import { X, Camera, Trash2 } from "lucide-react";
+import { X, Camera, Trash2, Loader2, AlertCircle } from "lucide-react";
 
 interface Props {
   watch: Watch;
@@ -24,6 +24,7 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
   const notes: WatchNotes = watch.notes ?? EMPTY_NOTES;
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   function patch(partial: Partial<WatchNotes>) {
     onUpdate({ ...watch, notes: { ...notes, ...partial } });
@@ -32,12 +33,27 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setUploading(true);
+    setPhotoError(null);
+
     try {
+      // Compress client-side before uploading (saves bandwidth + Drive quota)
       const compressed = await compressImage(file);
-      patch({ wristPhoto: compressed });
+
+      const res = await fetch(`/api/watches/${watch.id}/photo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoBase64: compressed }),
+      });
+
+      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+
+      const { url } = await res.json();
+      patch({ wristPhoto: url });
     } catch (err) {
-      console.error("Upload failed:", err);
+      console.error("Photo upload failed:", err);
+      setPhotoError("Upload failed. Check your connection and try again.");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -52,7 +68,7 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
         onClick={onClose}
       />
 
-      {/* Panel — bottom sheet on mobile, right drawer on desktop */}
+      {/* Panel */}
       <div className="fixed z-50 inset-x-0 bottom-0 sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:w-[420px] flex flex-col bg-zinc-900 border-t sm:border-t-0 sm:border-l border-zinc-800 shadow-2xl max-h-[90vh] sm:max-h-none overflow-hidden rounded-t-3xl sm:rounded-none">
         {/* Drag pill (mobile) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -64,7 +80,7 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0",
+                "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0 overflow-hidden",
                 getBrandGradient(watch.brand)
               )}
             >
@@ -73,7 +89,7 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
                 <img
                   src={watch.notes?.wristPhoto || watch.image}
                   alt=""
-                  className="w-full h-full object-cover rounded-xl"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <span className="text-white/30 text-base font-thin">
@@ -99,7 +115,7 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
           </button>
         </div>
 
-        {/* Scrollable body */}
+        {/* Body */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-5 py-6 space-y-8">
             {/* Fit & Wrist Presence */}
@@ -126,7 +142,7 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
               <textarea
                 value={notes.overallNotes}
                 onChange={(e) => patch({ overallNotes: e.target.value })}
-                placeholder="How did it feel? What stood out? First impression vs. after 10 minutes on wrist? Any hesitation?&#10;&#10;Transfer your showroom notes here while they're fresh…"
+                placeholder="How did it feel? First impression vs. after 10 minutes? Any hesitation?&#10;&#10;Transfer your showroom notes here while they&apos;re fresh…"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-zinc-700 transition-colors leading-relaxed min-h-[120px]"
                 rows={5}
               />
@@ -137,6 +153,13 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
               <p className="text-[11px] uppercase tracking-widest text-zinc-500 font-medium">
                 Wrist Photo
               </p>
+
+              {photoError && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                  <AlertCircle size={12} />
+                  {photoError}
+                </div>
+              )}
 
               {notes.wristPhoto ? (
                 <div className="relative rounded-xl overflow-hidden">
@@ -149,10 +172,15 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
                   <div className="absolute top-2 right-2 flex gap-1.5">
                     <button
                       onClick={() => fileRef.current?.click()}
-                      className="p-1.5 rounded-lg bg-black/60 text-zinc-300 hover:text-white"
+                      disabled={uploading}
+                      className="p-1.5 rounded-lg bg-black/60 text-zinc-300 hover:text-white disabled:opacity-50"
                       title="Replace photo"
                     >
-                      <Camera size={13} />
+                      {uploading ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Camera size={13} />
+                      )}
                     </button>
                     <button
                       onClick={() => patch({ wristPhoto: undefined })}
@@ -167,12 +195,21 @@ export function NotesPanel({ watch, onClose, onUpdate }: Props) {
                 <button
                   onClick={() => fileRef.current?.click()}
                   disabled={uploading}
-                  className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400 transition-all"
+                  className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400 transition-all disabled:opacity-50"
                 >
-                  <Camera size={20} />
-                  <span className="text-xs">
-                    {uploading ? "Compressing…" : "Take or upload a wrist photo"}
-                  </span>
+                  {uploading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      <span className="text-xs">Uploading to Drive…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera size={20} />
+                      <span className="text-xs">
+                        Take or upload a wrist photo
+                      </span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
