@@ -1,13 +1,15 @@
 "use client";
 
-import type { Watch, WatchTier } from "@/types/watch";
+import { useState } from "react";
+import type { Watch, WatchTier, WatchVariant } from "@/types/watch";
 import {
   cn,
   TIER_COLORS,
   TIER_LABELS,
   getBrandGradient,
 } from "@/lib/utils";
-import { StickyNote, Trophy, Star } from "lucide-react";
+import { StickyNote, Trophy, Star, ExternalLink } from "lucide-react";
+import { WATCH_VARIANTS } from "@/lib/watchData";
 
 interface Props {
   watch: Watch;
@@ -39,6 +41,79 @@ function ScorePip({ label, value }: { label: string; value: number }) {
   );
 }
 
+function VariantSection({ variants, watchId }: { variants: WatchVariant[]; watchId: string }) {
+  const group = WATCH_VARIANTS[watchId];
+  const defaultId = group?.defaultVariantId ?? variants[0].id;
+  const [activeId, setActiveId] = useState(defaultId);
+  const active = variants.find((v) => v.id === activeId) ?? variants[0];
+
+  return (
+    <div className="space-y-2.5">
+      {/* Variant tab pills */}
+      <div className="flex gap-1.5">
+        {variants.map((v) => (
+          <button
+            key={v.id}
+            onClick={() => setActiveId(v.id)}
+            className={cn(
+              "text-[10px] px-2.5 py-1 rounded-full border transition-all font-medium",
+              activeId === v.id
+                ? "bg-[#b8973a]/15 border-[#b8973a]/40 text-[#b8973a]"
+                : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+            )}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Selected variant details */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2.5 space-y-2">
+        {/* Reference + link */}
+        <div className="flex items-center justify-between">
+          <p
+            className="text-[10px] text-zinc-400"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            Ref. {active.reference}
+          </p>
+          <a
+            href={active.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[9px] text-zinc-600 hover:text-[#b8973a] transition-colors"
+          >
+            View on Rolex
+            <ExternalLink size={9} />
+          </a>
+        </div>
+
+        {/* Dial · Bracelet · Movement */}
+        <div
+          className="flex items-center gap-0 text-[10px] text-zinc-400"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          <span>{active.dialColor} dial</span>
+          <span className="mx-1.5 text-zinc-700">·</span>
+          <span>{active.bracelet}</span>
+          <span className="mx-1.5 text-zinc-700">·</span>
+          <span>{active.movement}</span>
+        </div>
+
+        {/* Notable bullet points */}
+        <ul className="space-y-1">
+          {active.notable.map((point, i) => (
+            <li key={i} className="flex items-start gap-1.5">
+              <span className="text-[#b8973a]/60 text-[8px] mt-[3px] flex-shrink-0">▸</span>
+              <span className="text-[10px] text-zinc-400 leading-snug">{point}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
   const displayPhoto =
     watch.notes?.wristPhoto || (watch.image ? watch.image : null);
@@ -46,6 +121,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
   const hasScores =
     (watch.notes?.fitScore ?? 0) > 0 || (watch.notes?.dialScore ?? 0) > 0;
   const isRanked = (watch.rank ?? 0) > 0;
+  const hasVariants = watch.variants && watch.variants.length > 0;
 
   return (
     <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-[#F5E6C8]/20 transition-colors duration-200 group">
@@ -114,7 +190,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
 
       {/* ---- Info ---- */}
       <div className="flex flex-col flex-1 p-4 gap-3">
-        {/* Brand + name + ref */}
+        {/* Brand + name */}
         <div>
           <p className="text-[9px] tracking-[0.25em] uppercase text-zinc-500 mb-0.5 font-medium">
             {watch.brand}
@@ -125,25 +201,45 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           >
             {watch.name}
           </h3>
-          <p
-            className="text-[10px] text-zinc-500 mt-0.5"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            Ref. {watch.reference}
-          </p>
+          {/* Only show flat reference if no variants */}
+          {!hasVariants && (
+            <p
+              className="text-[10px] text-zinc-500 mt-0.5"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              Ref. {watch.reference}
+            </p>
+          )}
         </div>
 
-        {/* Key specs */}
-        <div
-          className="flex items-center gap-0 text-[10px] text-zinc-400"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          <span>{watch.caseSize}</span>
-          <span className="mx-1.5 text-zinc-700">·</span>
-          <span>{watch.movement}</span>
-          <span className="mx-1.5 text-zinc-700">·</span>
-          <span>{watch.powerReserve}</span>
-        </div>
+        {/* Variant picker — replaces the flat ref + specs row */}
+        {hasVariants ? (
+          <VariantSection variants={watch.variants!} watchId={watch.id} />
+        ) : (
+          /* Flat specs row for non-variant watches */
+          <div
+            className="flex items-center gap-0 text-[10px] text-zinc-400"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            <span>{watch.caseSize}</span>
+            <span className="mx-1.5 text-zinc-700">·</span>
+            <span>{watch.movement}</span>
+            <span className="mx-1.5 text-zinc-700">·</span>
+            <span>{watch.powerReserve}</span>
+          </div>
+        )}
+
+        {/* Shared case size + power reserve for variant watches */}
+        {hasVariants && (
+          <div
+            className="flex items-center gap-0 text-[10px] text-zinc-500"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            <span>{watch.caseSize}</span>
+            <span className="mx-1.5 text-zinc-700">·</span>
+            <span>{watch.powerReserve} power reserve</span>
+          </div>
+        )}
 
         {/* Ali's recommendation */}
         {watch.recommendation && (

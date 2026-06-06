@@ -1,17 +1,63 @@
-import type { Watch } from "@/types/watch";
+import type { Watch, WatchVariant } from "@/types/watch";
+
+const SUBMARINER_VARIANTS: WatchVariant[] = [
+  {
+    id: "124060",
+    label: "No-Date",
+    reference: "124060",
+    url: "https://www.rolex.com/en-us/watches/submariner/m124060-0001",
+    dialColor: "Black",
+    bracelet: "Oyster",
+    movement: "Cal. 3230",
+    notable: [
+      "No date complication — cleaner dial symmetry",
+      "Slightly slimmer profile without date mechanism",
+      "Symmetric crown guards",
+    ],
+  },
+  {
+    id: "126610LN",
+    label: "Date",
+    reference: "126610LN",
+    url: "https://www.rolex.com/en-us/watches/submariner/m126610ln-0001",
+    dialColor: "Black",
+    bracelet: "Oyster",
+    movement: "Cal. 3235",
+    notable: [
+      "Date window at 3 o'clock with Cyclops magnification",
+      "Cal. 3235 — 70hr power reserve, more recent movement",
+      "Larger crown guards vs. the no-date",
+    ],
+  },
+];
+
+// Maps watch IDs to variant data + optional display name override.
+// Also maps the legacy "Submariner Date" ID so existing Sheet entries get enriched.
+export const WATCH_VARIANTS: Record<string, { name: string; defaultVariantId: string; variants: WatchVariant[] }> = {
+  "rolex-submariner": {
+    name: "Submariner",
+    defaultVariantId: "124060",
+    variants: SUBMARINER_VARIANTS,
+  },
+  "rolex-sub-126610ln": {
+    name: "Submariner",
+    defaultVariantId: "126610LN",
+    variants: SUBMARINER_VARIANTS,
+  },
+};
 
 export const DEFAULT_WATCHES: Watch[] = [
   {
-    id: "rolex-sub-126610ln",
+    id: "rolex-submariner",
     brand: "Rolex",
-    name: "Submariner Date",
-    reference: "126610LN",
+    name: "Submariner",
+    reference: "124060 / 126610LN",
     caseSize: "41mm",
-    movement: "Cal. 3235",
+    movement: "Cal. 3230 / 3235",
     powerReserve: "70 hours",
-    image: "",
+    image: "/images/rolex-sub-126610ln.jpg",
     recommendation:
-      "The gold standard for a reason. Nothing else has this combination of instant recognizability and genuine wearability. If you only buy one watch, the Sub makes the argument every time.",
+      "The question is always: date or no-date? Same DNA, same legend, very different feel. No-date is cleaner and more symmetrical. Date adds practicality and the more modern movement. Both are unmistakably Submariner.",
     rank: 1,
     tier: undefined,
     notes: undefined,

@@ -7,6 +7,7 @@ import { RankingView } from "@/components/RankingView";
 import { NotesPanel } from "@/components/NotesPanel";
 import { AddWatchModal } from "@/components/AddWatchModal";
 import { cn } from "@/lib/utils";
+import { WATCH_VARIANTS } from "@/lib/watchData";
 import {
   LayoutGrid,
   Trophy,
@@ -40,7 +41,13 @@ export function AppClient() {
         return r.json() as Promise<Watch[]>;
       })
       .then((data) => {
-        setWatches(data);
+        const enriched = (data as Watch[]).map((w) => {
+          const group = WATCH_VARIANTS[w.id];
+          return group
+            ? { ...w, name: group.name, variants: group.variants }
+            : w;
+        });
+        setWatches(enriched);
         setLoading(false);
       })
       .catch((err) => {

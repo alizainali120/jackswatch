@@ -7,6 +7,17 @@ export interface WatchNotes {
   wristPhoto?: string;
 }
 
+export interface WatchVariant {
+  id: string;
+  label: string;       // e.g. "No-Date" | "Date"
+  reference: string;   // e.g. "124060"
+  url: string;
+  dialColor: string;   // e.g. "Black"
+  bracelet: string;    // e.g. "Oyster"
+  movement: string;    // overrides Watch.movement for this variant
+  notable: string[];   // 2-3 key differentiators
+}
+
 export interface Watch {
   id: string;
   brand: string;
@@ -20,4 +31,5 @@ export interface Watch {
   rank: number;
   tier?: WatchTier;
   notes?: WatchNotes;
+  variants?: WatchVariant[];
 }
