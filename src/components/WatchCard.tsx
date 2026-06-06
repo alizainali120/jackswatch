@@ -1,75 +1,60 @@
 "use client";
 
-import { useRef, useState } from "react";
 import type { Watch, WatchTier } from "@/types/watch";
 import {
   cn,
-  formatPrice,
-  STYLE_COLORS,
-  STYLE_LABELS,
   TIER_COLORS,
   TIER_LABELS,
   getBrandGradient,
 } from "@/lib/utils";
-import { compressImage } from "@/lib/storage";
-import { Camera, FileText, ChevronDown } from "lucide-react";
+import { StickyNote, Trophy, Star } from "lucide-react";
 
 interface Props {
   watch: Watch;
-  onClick: () => void;
+  onNotesClick: () => void;
   onUpdate: (watch: Watch) => void;
 }
 
 const TIERS: WatchTier[] = ["must-have", "consider", "maybe", "pass"];
 
-export function WatchCard({ watch, onClick, onUpdate }: Props) {
-  const [photoMode, setPhotoMode] = useState<"stock" | "wrist">("stock");
-  const [uploading, setUploading] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+function ScorePip({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex gap-0.5">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div
+            key={i}
+            className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              i < Math.round(value / 2) ? "bg-[#b8973a]" : "bg-zinc-800"
+            )}
+          />
+        ))}
+      </div>
+      <span className="text-[10px] text-zinc-500">{label}</span>
+      <span className="text-[10px] text-[#b8973a] font-semibold tabular-nums ml-auto">
+        {value}/10
+      </span>
+    </div>
+  );
+}
 
-  const currentPhotos =
-    photoMode === "stock" ? watch.stockPhotos : watch.wristPhotos;
-  const displayPhoto = currentPhotos[0] ?? null;
-  const hasWristPhotos = watch.wristPhotos.length > 0;
-  const hasStockPhotos = watch.stockPhotos.length > 0;
-
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const compressed = await compressImage(file);
-      onUpdate({
-        ...watch,
-        wristPhotos: [...watch.wristPhotos, compressed],
-      });
-      setPhotoMode("wrist");
-    } catch (err) {
-      console.error("Photo upload failed:", err);
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
-  function handleTierChange(tier: WatchTier | undefined) {
-    onUpdate({ ...watch, tier });
-  }
-
-  function handleNotesChange(notes: string) {
-    onUpdate({ ...watch, notes });
-  }
+export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
+  const displayPhoto =
+    watch.notes?.wristPhoto || (watch.image ? watch.image : null);
+  const isWristPhoto = !!watch.notes?.wristPhoto;
+  const hasScores =
+    (watch.notes?.fitScore ?? 0) > 0 || (watch.notes?.dialScore ?? 0) > 0;
+  const isRanked = (watch.rank ?? 0) > 0;
 
   return (
-    <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors">
-      {/* Photo area */}
+    <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors group">
+      {/* ---- Photo ---- */}
       <div
         className={cn(
-          "relative h-52 cursor-pointer group",
-          `bg-gradient-to-br ${getBrandGradient(watch.brand)}`
+          "relative h-56 bg-gradient-to-br",
+          getBrandGradient(watch.brand)
         )}
-        onClick={onClick}
       >
         {displayPhoto ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -79,22 +64,40 @@ export function WatchCard({ watch, onClick, onUpdate }: Props) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-            <span className="text-3xl font-thin tracking-widest text-white/20 uppercase">
+          <div className="w-full h-full flex flex-col items-center justify-center select-none">
+            <span className="text-[56px] font-thin text-white/10 leading-none">
               {watch.brand[0]}
             </span>
-            <span className="text-[10px] tracking-widest text-white/15 uppercase">
+            <span className="text-[10px] tracking-[0.3em] text-white/15 uppercase mt-1">
               {watch.brand}
             </span>
           </div>
         )}
 
+        {/* Photo label */}
+        {isWristPhoto && (
+          <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/60 text-[9px] tracking-widest text-white/70 uppercase">
+            On wrist
+          </div>
+        )}
+
         {/* Rank badge */}
-        <div className="absolute top-2.5 left-2.5 w-6 h-6 rounded-full bg-black/60 border border-white/10 flex items-center justify-center">
-          <span className="text-[10px] font-semibold text-[#b8973a]">
-            {watch.rank}
-          </span>
-        </div>
+        {isRanked && (
+          <div className="absolute top-2.5 left-2.5">
+            {watch.rank === 1 ? (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#b8973a]/20 border border-[#b8973a]/40">
+                <Trophy size={10} className="text-[#b8973a]" />
+                <span className="text-[10px] font-bold text-[#b8973a]">#1</span>
+              </div>
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-black/60 border border-white/10 flex items-center justify-center">
+                <span className="text-[10px] font-semibold text-zinc-300">
+                  {watch.rank}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tier badge */}
         {watch.tier && (
@@ -107,166 +110,100 @@ export function WatchCard({ watch, onClick, onUpdate }: Props) {
             {TIER_LABELS[watch.tier]}
           </div>
         )}
-
-        {/* Photo mode toggle */}
-        {(hasStockPhotos || hasWristPhotos) && (
-          <div className="absolute bottom-2 right-2 flex gap-1">
-            {hasStockPhotos && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPhotoMode("stock");
-                }}
-                className={cn(
-                  "px-2 py-0.5 rounded text-[10px] font-medium transition-all",
-                  photoMode === "stock"
-                    ? "bg-white/20 text-white"
-                    : "bg-black/40 text-white/50 hover:text-white"
-                )}
-              >
-                Stock
-              </button>
-            )}
-            {hasWristPhotos && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPhotoMode("wrist");
-                }}
-                className={cn(
-                  "px-2 py-0.5 rounded text-[10px] font-medium transition-all",
-                  photoMode === "wrist"
-                    ? "bg-white/20 text-white"
-                    : "bg-black/40 text-white/50 hover:text-white"
-                )}
-              >
-                Wrist
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Upload button overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
       </div>
 
-      {/* Info */}
+      {/* ---- Info ---- */}
       <div className="flex flex-col flex-1 p-4 gap-3">
-        {/* Brand + name */}
-        <div className="cursor-pointer" onClick={onClick}>
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] tracking-widest uppercase text-zinc-500 font-medium">
-              {watch.brand}
-            </span>
-            <span
-              className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full border",
-                STYLE_COLORS[watch.style]
-              )}
-            >
-              {STYLE_LABELS[watch.style]}
-            </span>
-          </div>
+        {/* Brand + name + ref */}
+        <div>
+          <p className="text-[9px] tracking-[0.25em] uppercase text-zinc-600 mb-0.5 font-medium">
+            {watch.brand}
+          </p>
           <h3 className="text-sm font-semibold text-zinc-100 leading-tight">
             {watch.name}
           </h3>
-          <p className="text-[11px] text-zinc-600 font-mono mt-0.5">
-            {watch.reference}
+          <p className="text-[10px] text-zinc-600 font-mono mt-0.5">
+            Ref. {watch.reference}
           </p>
         </div>
 
-        {/* Price */}
-        <div className="text-[#b8973a] text-sm font-semibold">
-          {formatPrice(watch.price)}
+        {/* Key specs */}
+        <div className="flex items-center gap-0 text-[10px] text-zinc-500">
+          <span>{watch.caseSize}</span>
+          <span className="mx-1.5 text-zinc-700">·</span>
+          <span>{watch.movement}</span>
+          <span className="mx-1.5 text-zinc-700">·</span>
+          <span>{watch.powerReserve}</span>
         </div>
 
-        {/* Color swatches */}
-        {watch.colorOptions.length > 0 && (
-          <div className="flex items-center gap-1.5">
-            {watch.colorOptions.map((c) => (
-              <div
-                key={c.name}
-                title={c.name + (c.description ? ` — ${c.description}` : "")}
-                className="w-4 h-4 rounded-full border border-white/15 cursor-default"
-                style={{ backgroundColor: c.hex }}
-              />
-            ))}
+        {/* Ali's recommendation */}
+        {watch.recommendation && (
+          <p className="text-[11px] text-zinc-500 italic leading-relaxed border-l-2 border-[#b8973a]/30 pl-2.5">
+            {watch.recommendation}
+          </p>
+        )}
+
+        {/* Scores */}
+        {hasScores && (
+          <div className="space-y-1.5 pt-1 border-t border-zinc-800">
+            <ScorePip
+              label="Fit"
+              value={watch.notes?.fitScore ?? 0}
+            />
+            <ScorePip
+              label="Dial"
+              value={watch.notes?.dialScore ?? 0}
+            />
           </div>
         )}
 
-        {/* Tier selector */}
-        <div className="flex flex-wrap gap-1">
-          {TIERS.map((t) => (
-            <button
-              key={t}
-              onClick={() => handleTierChange(watch.tier === t ? undefined : t)}
-              className={cn(
-                "text-[10px] px-2 py-0.5 rounded-full border transition-all",
-                watch.tier === t
-                  ? TIER_COLORS[t]
-                  : "border-zinc-800 text-zinc-600 hover:border-zinc-700 hover:text-zinc-500"
-              )}
-            >
-              {TIER_LABELS[t]}
-            </button>
-          ))}
-        </div>
+        {/* Tier selector + notes button */}
+        <div className="flex items-center justify-between mt-auto pt-1 gap-2">
+          {/* Tier picker */}
+          <div className="flex flex-wrap gap-1">
+            {TIERS.map((t) => (
+              <button
+                key={t}
+                onClick={() =>
+                  onUpdate({ ...watch, tier: watch.tier === t ? undefined : t })
+                }
+                className={cn(
+                  "text-[9px] px-2 py-0.5 rounded-full border transition-all",
+                  watch.tier === t
+                    ? TIER_COLORS[t]
+                    : "border-zinc-800 text-zinc-700 hover:border-zinc-700 hover:text-zinc-500"
+                )}
+              >
+                {TIER_LABELS[t]}
+              </button>
+            ))}
+          </div>
 
-        {/* Upload + notes row */}
-        <div className="flex items-center gap-2 mt-auto pt-1">
+          {/* Notes button */}
           <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
-          >
-            <Camera size={13} />
-            {uploading
-              ? "Uploading…"
-              : hasWristPhotos
-              ? `${watch.wristPhotos.length} wrist photo${watch.wristPhotos.length !== 1 ? "s" : ""}`
-              : "Wrist photo"}
-          </button>
-          <div className="flex-1" />
-          <button
-            onClick={() => setNotesOpen((v) => !v)}
+            onClick={onNotesClick}
             className={cn(
-              "flex items-center gap-1 text-[11px] transition-colors",
-              notesOpen || watch.notes
-                ? "text-[#b8973a]"
-                : "text-zinc-600 hover:text-zinc-400"
+              "flex items-center gap-1.5 flex-shrink-0 px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-all",
+              watch.notes?.overallNotes || hasScores
+                ? "border-[#b8973a]/30 bg-[#b8973a]/10 text-[#b8973a] hover:bg-[#b8973a]/20"
+                : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
             )}
           >
-            <FileText size={13} />
-            <ChevronDown
-              size={11}
-              className={cn(
-                "transition-transform",
-                notesOpen && "rotate-180"
-              )}
-            />
+            <Star size={11} />
+            Rate
           </button>
         </div>
 
-        {/* Notes */}
-        {notesOpen && (
-          <textarea
-            value={watch.notes}
-            onChange={(e) => handleNotesChange(e.target.value)}
-            placeholder="Wrist notes, impressions, feelings…"
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-zinc-600 transition-colors"
-            rows={3}
-          />
+        {/* Notes snippet */}
+        {watch.notes?.overallNotes && (
+          <div className="flex items-start gap-1.5 pt-2 border-t border-zinc-800">
+            <StickyNote size={11} className="text-zinc-700 mt-0.5 flex-shrink-0" />
+            <p className="text-[10px] text-zinc-600 line-clamp-2 leading-relaxed">
+              {watch.notes.overallNotes}
+            </p>
+          </div>
         )}
       </div>
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handlePhotoUpload}
-      />
     </div>
   );
 }

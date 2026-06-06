@@ -4,9 +4,6 @@
   --color-gold: #b8973a;
   --color-gold-light: #d4aa4d;
   --color-gold-dim: #7a6428;
-  --color-surface: #0c0c0d;
-  --color-surface-raised: #111113;
-  --color-surface-elevated: #18181b;
 }
 
 :root {
@@ -26,43 +23,88 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+
+/* ---- Score slider ---- */
+.score-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 100%;
   background: transparent;
+  cursor: pointer;
+  outline: none;
 }
-::-webkit-scrollbar-thumb {
-  background: #3f3f46;
-  border-radius: 3px;
+.score-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 0;
+  height: 0;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
-}
-
-/* Drag ghost */
-[data-dnd-dragging="true"] {
-  opacity: 0.6;
-  cursor: grabbing;
-}
-
-/* Photo grid */
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
+.score-slider::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: none;
 }
 
-/* Force dark bg on select options */
+/* Select options dark */
 select option {
   background-color: #18181b;
   color: #e4e4e7;
 }
 
-/* Textarea reset */
-textarea {
-  resize: none;
-  field-sizing: content;
-  min-height: 72px;
+/* ---- Print styles ---- */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+  }
+
+  /* Hide everything not meant for print */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Reset card backgrounds */
+  .print-card {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 8px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    color: #000 !important;
+  }
+
+  .print-card * {
+    color: #000 !important;
+  }
+
+  .print-gold {
+    color: #7a5c00 !important;
+    font-weight: 700;
+  }
+
+  .print-muted {
+    color: #555 !important;
+  }
+
+  h1, h2, h3 {
+    color: #000 !important;
+  }
+
+  @page {
+    margin: 1.5cm;
+  }
 }

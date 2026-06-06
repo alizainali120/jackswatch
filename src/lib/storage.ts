@@ -1,7 +1,7 @@
 import type { Watch } from "@/types/watch";
 import { DEFAULT_WATCHES } from "./watchData";
 
-const STORAGE_KEY = "jackswatch_v1";
+const STORAGE_KEY = "jackswatch_v2";
 
 export function loadWatches(): Watch[] {
   if (typeof window === "undefined") return DEFAULT_WATCHES;
@@ -21,7 +21,7 @@ export function saveWatches(watches: Watch[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(watches));
   } catch (e) {
-    console.warn("localStorage quota exceeded. Try removing some wrist photos.", e);
+    console.warn("localStorage full — try removing wrist photos.", e);
   }
 }
 

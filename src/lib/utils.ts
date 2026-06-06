@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { WatchStyle, WatchTier } from "@/types/watch";
+import type { WatchTier } from "@/types/watch";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -13,24 +13,6 @@ export function formatPrice(price: number) {
     minimumFractionDigits: 0,
   }).format(price);
 }
-
-export const STYLE_LABELS: Record<WatchStyle, string> = {
-  diver: "Diver",
-  sport: "Sport",
-  dress: "Dress",
-  pilot: "Pilot",
-  casual: "Casual",
-  field: "Field",
-};
-
-export const STYLE_COLORS: Record<WatchStyle, string> = {
-  diver: "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
-  sport: "bg-green-500/15 text-green-400 border-green-500/25",
-  dress: "bg-rose-500/15 text-rose-400 border-rose-500/25",
-  pilot: "bg-orange-500/15 text-orange-400 border-orange-500/25",
-  casual: "bg-zinc-500/15 text-zinc-400 border-zinc-500/25",
-  field: "bg-lime-500/15 text-lime-400 border-lime-500/25",
-};
 
 export const TIER_LABELS: Record<WatchTier, string> = {
   "must-have": "Must Have",
@@ -63,4 +45,13 @@ export function getBrandGradient(brand: string): string {
 
 export function generateId(): string {
   return `watch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function scoreLabel(score: number): string {
+  if (score >= 9) return "Exceptional";
+  if (score >= 7) return "Great";
+  if (score >= 5) return "Good";
+  if (score >= 3) return "Fair";
+  if (score === 0) return "Unrated";
+  return "Poor";
 }
