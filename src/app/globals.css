@@ -54,6 +54,12 @@ body {
   gap: 8px;
 }
 
+/* Force dark bg on select options */
+select option {
+  background-color: #18181b;
+  color: #e4e4e7;
+}
+
 /* Textarea reset */
 textarea {
   resize: none;
