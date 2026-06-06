@@ -2,31 +2,35 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 
 function getAuth() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not set");
-  const creds = JSON.parse(raw);
-  if (creds.private_key) {
-    creds.private_key = creds.private_key.replace(/\\n/g, "\n");
+  const client_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const private_key = process.env.GOOGLE_PRIVATE_KEY;
+
+  if (!client_email || !private_key) {
+    throw new Error(
+      "Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY"
+    );
   }
+
   return new google.auth.GoogleAuth({
-    credentials: creds,
+    credentials: {
+      client_email,
+      private_key: private_key.replace(/\\n/g, "\n"),
+    },
     scopes: ["https://www.googleapis.com/auth/drive"],
   });
 }
 
 /**
- * Upload a base64 image to Google Drive and return a publicly accessible URL.
- * The file is placed in GOOGLE_DRIVE_FOLDER_ID if set, otherwise Drive root.
+ * Upload a base64-encoded image to Google Drive.
+ * Returns a publicly accessible direct-view URL.
  */
 export async function uploadPhotoToDrive(
   base64Data: string,
   fileName: string
 ): Promise<string> {
-  const auth = getAuth();
-  const drive = google.drive({ version: "v3", auth });
+  const drive = google.drive({ version: "v3", auth: getAuth() });
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-  // Strip the data URL prefix (data:image/jpeg;base64,…)
   const base64 = base64Data.replace(/^data:image\/\w+;base64,/, "");
   const buffer = Buffer.from(base64, "base64");
 
@@ -45,7 +49,6 @@ export async function uploadPhotoToDrive(
 
   const fileId = res.data.id!;
 
-  // Make the file readable by anyone with the link
   await drive.permissions.create({
     fileId,
     requestBody: { role: "reader", type: "anyone" },

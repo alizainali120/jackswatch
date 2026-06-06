@@ -3,15 +3,21 @@ import { google } from "googleapis";
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 function getAuth() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is not set");
-  const creds = JSON.parse(raw);
-  // Env vars often escape the newlines in the private key
-  if (creds.private_key) {
-    creds.private_key = creds.private_key.replace(/\\n/g, "\n");
+  const client_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const private_key = process.env.GOOGLE_PRIVATE_KEY;
+
+  if (!client_email || !private_key) {
+    throw new Error(
+      "Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY"
+    );
   }
+
   return new google.auth.GoogleAuth({
-    credentials: creds,
+    credentials: {
+      client_email,
+      // Vercel stores \n as a literal two-char sequence — unescape it
+      private_key: private_key.replace(/\\n/g, "\n"),
+    },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 }
@@ -27,11 +33,19 @@ async function client() {
 }
 
 // ── Sheet layout ──────────────────────────────────────────────────────────────
-// Tab name: "JacksWatch"
-// Columns: A=id  B=rank  C=tier  D=fitScore  E=dialScore  F=overallNotes  G=wristPhotoUrl
+// Tab name : "JacksWatch"
+// Columns  : A=id  B=rank  C=tier  D=fitScore  E=dialScore  F=overallNotes  G=wristPhotoUrl
 const TAB = "JacksWatch";
 const RANGE = `${TAB}!A:G`;
-const HEADERS = ["id", "rank", "tier", "fitScore", "dialScore", "overallNotes", "wristPhotoUrl"];
+const HEADERS = [
+  "id",
+  "rank",
+  "tier",
+  "fitScore",
+  "dialScore",
+  "overallNotes",
+  "wristPhotoUrl",
+];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -45,7 +59,7 @@ export interface SheetRow {
   wristPhotoUrl: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
 async function ensureHeaders(
   sheets: Awaited<ReturnType<typeof client>>
@@ -74,7 +88,7 @@ async function findRowIndex(
   });
   const col = res.data.values ?? [];
   const idx = col.findIndex((r) => r[0] === id);
-  return idx <= 0 ? null : idx + 1; // 1-based; skip header (idx=0)
+  return idx <= 0 ? null : idx + 1; // 1-based; 0 = header row → skip
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -125,18 +139,28 @@ export async function upsertNotes(
       valueInputOption: "RAW",
       requestBody: {
         values: [
-          [id, "", data.tier ?? "", data.fitScore, data.dialScore, data.overallNotes, ""],
+          [
+            id,
+            "",
+            data.tier ?? "",
+            data.fitScore,
+            data.dialScore,
+            data.overallNotes,
+            "",
+          ],
         ],
       },
     });
   } else {
-    // Update C:F only — don't touch rank (B) or wristPhotoUrl (G)
+    // Update C:F only — leave rank (B) and wristPhotoUrl (G) untouched
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId(),
       range: `${TAB}!C${rowIdx}:F${rowIdx}`,
       valueInputOption: "RAW",
       requestBody: {
-        values: [[data.tier ?? "", data.fitScore, data.dialScore, data.overallNotes]],
+        values: [
+          [data.tier ?? "", data.fitScore, data.dialScore, data.overallNotes],
+        ],
       },
     });
   }
@@ -185,7 +209,6 @@ export async function updateRanks(
   for (const { id, rank } of ranks) {
     const idx = col.findIndex((r) => r[0] === id);
     if (idx <= 0) {
-      // Not found (or is the header row) — append a new row
       toAppend.push([id, String(rank), "", "0", "0", "", ""]);
     } else {
       batchData.push({
