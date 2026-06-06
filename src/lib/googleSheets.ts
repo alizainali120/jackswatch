@@ -16,7 +16,9 @@ function getAuth() {
     credentials: {
       client_email,
       // Vercel stores \n as a literal two-char sequence — unescape it
-      private_key: private_key.replace(/\\n/g, "\n"),
+      private_key: private_key
+        .replace(/^["']|["']$/g, "")
+        .replace(/\\n/g, "\n"),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
