@@ -104,9 +104,18 @@ export function AppClient() {
     }
   }, []);
 
-  // ── Local-only add (session only — not persisted) ───────────────────────────
-  const addWatch = useCallback((watch: Watch) => {
+  // ── Add watch — persisted to sheet ─────────────────────────────────────────
+  const addWatch = useCallback(async (watch: Watch) => {
     setWatches((prev) => [...prev, watch]);
+    try {
+      await fetch("/api/watches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(watch),
+      });
+    } catch (err) {
+      console.error("Add watch failed:", err);
+    }
   }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
