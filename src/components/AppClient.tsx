@@ -42,6 +42,7 @@ export function AppClient() {
       })
       .then((data) => {
         const enriched = (data as Watch[]).map((w) => {
+          if (w.variants?.length) return w; // already has sheet-stored variants
           const group = WATCH_VARIANTS[w.id];
           return group
             ? { ...w, name: group.name, variants: group.variants }

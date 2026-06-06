@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAllRows, upsertWatch } from "@/lib/googleSheets";
 import { generateId } from "@/lib/utils";
+import type { Watch } from "@/types/watch";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,10 @@ export async function GET() {
         let variantPreferences: Record<string, "prefer" | "pass"> | undefined;
         if (row.variantPrefs) {
           try { variantPreferences = JSON.parse(row.variantPrefs); } catch { /* ignore */ }
+        }
+        let variants: Watch["variants"] | undefined;
+        if (row.variantsJson) {
+          try { variants = JSON.parse(row.variantsJson); } catch { /* ignore */ }
         }
         const hasNotes = row.fitScore > 0 || row.dialScore > 0 || row.overallNotes || row.wristPhotoUrl || variantPreferences;
         return {
@@ -27,6 +32,7 @@ export async function GET() {
           recommendation: row.recommendation,
           rank: row.rank || 99,
           tier: row.tier || undefined,
+          variants,
           notes: hasNotes
             ? {
                 fitScore: row.fitScore,
@@ -64,6 +70,7 @@ export async function POST(req: Request) {
       powerReserve: String(body.powerReserve ?? ""),
       image: String(body.image ?? ""),
       recommendation: String(body.recommendation ?? ""),
+      variantsJson: body.variants?.length ? JSON.stringify(body.variants) : "",
     });
 
     return NextResponse.json({ id });

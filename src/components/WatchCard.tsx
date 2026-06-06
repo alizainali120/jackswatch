@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { Watch, WatchTier, WatchVariant, VariantPreference } from "@/types/watch";
 import {
   cn,
@@ -8,8 +7,7 @@ import {
   TIER_LABELS,
   getBrandGradient,
 } from "@/lib/utils";
-import { StickyNote, Trophy, Star, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
-import { WATCH_VARIANTS } from "@/lib/watchData";
+import { StickyNote, Trophy, Star, ExternalLink } from "lucide-react";
 
 interface Props {
   watch: Watch;
@@ -41,134 +39,104 @@ function ScorePip({ label, value }: { label: string; value: number }) {
   );
 }
 
-function VariantSection({
-  variants,
-  watchId,
-  preferences,
-  onPreferenceChange,
+function VariantRow({
+  variant,
+  pref,
+  onTogglePref,
 }: {
-  variants: WatchVariant[];
-  watchId: string;
-  preferences?: Record<string, VariantPreference>;
-  onPreferenceChange: (prefs: Record<string, VariantPreference>) => void;
+  variant: WatchVariant;
+  pref?: VariantPreference;
+  onTogglePref: (p: VariantPreference) => void;
 }) {
-  const group = WATCH_VARIANTS[watchId];
-  const defaultId = group?.defaultVariantId ?? variants[0].id;
-  const [activeId, setActiveId] = useState(defaultId);
-  const active = variants.find((v) => v.id === activeId) ?? variants[0];
-  const activePref = preferences?.[active.id];
-
-  function setPref(pref: VariantPreference) {
-    const updated = { ...(preferences ?? {}) };
-    if (updated[active.id] === pref) {
-      delete updated[active.id]; // toggle off
-    } else {
-      updated[active.id] = pref;
-    }
-    onPreferenceChange(updated);
-  }
+  const specs = [
+    variant.dialColor && `${variant.dialColor} dial`,
+    variant.bracelet,
+    variant.movement,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="space-y-2.5">
-      {/* Variant tab pills */}
-      <div className="flex gap-1.5">
-        {variants.map((v) => {
-          const pref = preferences?.[v.id];
-          return (
-            <button
-              key={v.id}
-              onClick={() => setActiveId(v.id)}
-              className={cn(
-                "flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border transition-all font-medium",
-                activeId === v.id
-                  ? "bg-[#b8973a]/15 border-[#b8973a]/40 text-[#b8973a]"
-                  : pref === "prefer"
-                  ? "border-emerald-800/50 text-emerald-500/80 hover:border-emerald-700 hover:text-emerald-400"
-                  : pref === "pass"
-                  ? "border-red-900/40 text-red-500/50 hover:border-red-800 hover:text-red-400"
-                  : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-              )}
+    <div
+      className={cn(
+        "rounded-xl border px-3 py-2.5 transition-colors",
+        pref === "prefer"
+          ? "border-emerald-800/50 bg-emerald-950/20"
+          : pref === "pass"
+          ? "border-red-900/40 bg-red-950/10"
+          : "border-zinc-800 bg-zinc-950/30"
+      )}
+    >
+      {/* Label + reference link + preference buttons */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[11px] font-medium text-zinc-200 flex-shrink-0">
+            {variant.label}
+          </span>
+          {variant.url ? (
+            <a
+              href={variant.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-0.5 text-[10px] text-zinc-500 hover:text-[#b8973a] transition-colors truncate"
+              style={{ fontFamily: "var(--font-mono)" }}
             >
-              {v.label}
-              {pref === "prefer" && <span className="text-emerald-500 text-[8px]">★</span>}
-              {pref === "pass" && <span className="text-red-500/60 text-[8px]">✕</span>}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected variant details */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2.5 space-y-2">
-        {/* Reference + link */}
-        <div className="flex items-center justify-between">
-          <p
-            className="text-[10px] text-zinc-400"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            Ref. {active.reference}
-          </p>
-          <a
-            href={active.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[9px] text-zinc-600 hover:text-[#b8973a] transition-colors"
-          >
-            View on Rolex
-            <ExternalLink size={9} />
-          </a>
+              {variant.reference}
+              <ExternalLink size={8} className="flex-shrink-0 ml-0.5" />
+            </a>
+          ) : (
+            <span
+              className="text-[10px] text-zinc-500 truncate"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              {variant.reference}
+            </span>
+          )}
         </div>
 
-        {/* Dial · Bracelet · Movement */}
-        <div
-          className="flex items-center gap-0 text-[10px] text-zinc-400"
+        <div className="flex gap-1 flex-shrink-0">
+          <button
+            onClick={() => onTogglePref("prefer")}
+            className={cn(
+              "text-[9px] px-1.5 py-0.5 rounded-full border transition-all",
+              pref === "prefer"
+                ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                : "border-zinc-700 text-zinc-600 hover:border-emerald-800/60 hover:text-emerald-500"
+            )}
+          >
+            Prefer
+          </button>
+          <button
+            onClick={() => onTogglePref("pass")}
+            className={cn(
+              "text-[9px] px-1.5 py-0.5 rounded-full border transition-all",
+              pref === "pass"
+                ? "bg-red-500/15 border-red-500/40 text-red-400"
+                : "border-zinc-700 text-zinc-600 hover:border-red-900/60 hover:text-red-500"
+            )}
+          >
+            Pass
+          </button>
+        </div>
+      </div>
+
+      {/* Specs */}
+      {specs && (
+        <p
+          className="text-[10px] text-zinc-500 mt-1"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          <span>{active.dialColor} dial</span>
-          <span className="mx-1.5 text-zinc-700">·</span>
-          <span>{active.bracelet}</span>
-          <span className="mx-1.5 text-zinc-700">·</span>
-          <span>{active.movement}</span>
-        </div>
+          {specs}
+        </p>
+      )}
 
-        {/* Notable bullet points */}
-        <ul className="space-y-1">
-          {active.notable.map((point, i) => (
-            <li key={i} className="flex items-start gap-1.5">
-              <span className="text-[#b8973a]/60 text-[8px] mt-[3px] flex-shrink-0">▸</span>
-              <span className="text-[10px] text-zinc-400 leading-snug">{point}</span>
-            </li>
-          ))}
-        </ul>
-
-        {/* Preference buttons */}
-        <div className="flex items-center gap-2 pt-1 border-t border-zinc-800/60">
-          <span className="text-[9px] text-zinc-600 uppercase tracking-widest">Prefer?</span>
-          <button
-            onClick={() => setPref("prefer")}
-            className={cn(
-              "flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all",
-              activePref === "prefer"
-                ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
-                : "border-zinc-800 text-zinc-600 hover:border-emerald-800 hover:text-emerald-500"
-            )}
-          >
-            <ThumbsUp size={9} />
-            Yes
-          </button>
-          <button
-            onClick={() => setPref("pass")}
-            className={cn(
-              "flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all",
-              activePref === "pass"
-                ? "bg-red-500/15 border-red-500/40 text-red-400"
-                : "border-zinc-800 text-zinc-600 hover:border-red-900 hover:text-red-500"
-            )}
-          >
-            <ThumbsDown size={9} />
-            No
-          </button>
-        </div>
-      </div>
+      {/* First notable point */}
+      {variant.notable[0] && (
+        <p className="text-[10px] text-zinc-600 mt-1 leading-snug">
+          {variant.notable[0]}
+        </p>
+      )}
     </div>
   );
 }
@@ -181,6 +149,23 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
     (watch.notes?.fitScore ?? 0) > 0 || (watch.notes?.dialScore ?? 0) > 0;
   const isRanked = (watch.rank ?? 0) > 0;
   const hasVariants = watch.variants && watch.variants.length > 0;
+
+  function toggleVariantPref(variantId: string, pref: VariantPreference) {
+    const current = watch.notes?.variantPreferences ?? {};
+    const updated = { ...current };
+    if (updated[variantId] === pref) {
+      delete updated[variantId];
+    } else {
+      updated[variantId] = pref;
+    }
+    onUpdate({
+      ...watch,
+      notes: {
+        ...(watch.notes ?? { fitScore: 0, dialScore: 0, overallNotes: "" }),
+        variantPreferences: updated,
+      },
+    });
+  }
 
   return (
     <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-[#F5E6C8]/20 transition-colors duration-200 group">
@@ -209,14 +194,12 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           </div>
         )}
 
-        {/* Photo label */}
         {isWristPhoto && (
           <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/60 text-[9px] tracking-widest text-white/70 uppercase">
             On wrist
           </div>
         )}
 
-        {/* Rank badge */}
         {isRanked && (
           <div className="absolute top-2.5 left-2.5">
             {watch.rank === 1 ? (
@@ -234,7 +217,6 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           </div>
         )}
 
-        {/* Tier badge */}
         {watch.tier && (
           <div
             className={cn(
@@ -260,7 +242,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           >
             {watch.name}
           </h3>
-          {/* Only show flat reference if no variants */}
+          {/* Only show flat reference for non-variant watches */}
           {!hasVariants && (
             <p
               className="text-[10px] text-zinc-500 mt-0.5"
@@ -271,21 +253,19 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           )}
         </div>
 
-        {/* Variant picker — replaces the flat ref + specs row */}
+        {/* Variant list */}
         {hasVariants ? (
-          <VariantSection
-            variants={watch.variants!}
-            watchId={watch.id}
-            preferences={watch.notes?.variantPreferences}
-            onPreferenceChange={(prefs) =>
-              onUpdate({
-                ...watch,
-                notes: { ...(watch.notes ?? { fitScore: 0, dialScore: 0, overallNotes: "" }), variantPreferences: prefs },
-              })
-            }
-          />
+          <div className="space-y-1.5">
+            {watch.variants!.map((v) => (
+              <VariantRow
+                key={v.id}
+                variant={v}
+                pref={watch.notes?.variantPreferences?.[v.id]}
+                onTogglePref={(p) => toggleVariantPref(v.id, p)}
+              />
+            ))}
+          </div>
         ) : (
-          /* Flat specs row for non-variant watches */
           <div
             className="flex items-center gap-0 text-[10px] text-zinc-400"
             style={{ fontFamily: "var(--font-mono)" }}
@@ -298,7 +278,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           </div>
         )}
 
-        {/* Shared case size + power reserve for variant watches */}
+        {/* Shared specs for variant watches */}
         {hasVariants && (
           <div
             className="flex items-center gap-0 text-[10px] text-zinc-500"
@@ -310,7 +290,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           </div>
         )}
 
-        {/* Ali's recommendation */}
+        {/* Recommendation */}
         {watch.recommendation && (
           <p className="text-[11px] text-zinc-400 italic leading-relaxed border-l-2 border-[#b8973a]/30 pl-2.5">
             {watch.recommendation}
@@ -320,20 +300,13 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
         {/* Scores */}
         {hasScores && (
           <div className="space-y-1.5 pt-1 border-t border-zinc-800">
-            <ScorePip
-              label="Fit"
-              value={watch.notes?.fitScore ?? 0}
-            />
-            <ScorePip
-              label="Dial"
-              value={watch.notes?.dialScore ?? 0}
-            />
+            <ScorePip label="Fit" value={watch.notes?.fitScore ?? 0} />
+            <ScorePip label="Dial" value={watch.notes?.dialScore ?? 0} />
           </div>
         )}
 
         {/* Tier selector + notes button */}
         <div className="flex items-center justify-between mt-auto pt-1 gap-2">
-          {/* Tier picker */}
           <div className="flex flex-wrap gap-1">
             {TIERS.map((t) => (
               <button
@@ -353,7 +326,6 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
             ))}
           </div>
 
-          {/* Notes button */}
           <button
             onClick={onNotesClick}
             className={cn(

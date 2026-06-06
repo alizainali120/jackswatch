@@ -40,13 +40,13 @@ async function client() {
 // Columns  : A=id  B=rank  C=tier  D=fitScore  E=dialScore  F=overallNotes
 //            G=wristPhotoUrl  H=brand  I=name  J=reference  K=caseSize
 //            L=movement  M=powerReserve  N=image  O=recommendation
-//            P=variantPrefs (JSON)
+//            P=variantPrefs (JSON)  Q=variantsJson (JSON)
 const TAB = "JacksWatch";
-const RANGE = `${TAB}!A:P`;
+const RANGE = `${TAB}!A:Q`;
 const HEADERS = [
   "id", "rank", "tier", "fitScore", "dialScore", "overallNotes",
   "wristPhotoUrl", "brand", "name", "reference", "caseSize",
-  "movement", "powerReserve", "image", "recommendation", "variantPrefs",
+  "movement", "powerReserve", "image", "recommendation", "variantPrefs", "variantsJson",
 ];
 
 
@@ -69,6 +69,7 @@ export interface SheetRow {
   image: string;
   recommendation: string;
   variantPrefs: string;
+  variantsJson: string;
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -78,13 +79,13 @@ async function ensureHeaders(
 ): Promise<void> {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId(),
-    range: `${TAB}!A1:P1`,
+    range: `${TAB}!A1:Q1`,
   });
   const headerRow = res.data.values?.[0] ?? [];
-  if (headerRow[0] !== "id" || headerRow[15] !== "variantPrefs") {
+  if (headerRow[0] !== "id" || headerRow[16] !== "variantsJson") {
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId(),
-      range: `${TAB}!A1:P1`,
+      range: `${TAB}!A1:Q1`,
       valueInputOption: "RAW",
       requestBody: { values: [HEADERS] },
     });
@@ -122,6 +123,7 @@ function rowToSheetRow(row: string[]): SheetRow {
     image: row[13] ?? "",
     recommendation: row[14] ?? "",
     variantPrefs: row[15] ?? "",
+    variantsJson: row[16] ?? "",
   };
 }
 
@@ -130,12 +132,15 @@ function watchToRow(w: {
   dialScore?: number; overallNotes?: string; wristPhotoUrl?: string;
   brand: string; name: string; reference: string; caseSize: string;
   movement: string; powerReserve: string; image: string; recommendation: string;
+  variantsJson?: string;
 }): string[] {
   return [
     w.id, String(w.rank ?? ""), w.tier ?? "", String(w.fitScore ?? 0),
     String(w.dialScore ?? 0), w.overallNotes ?? "", w.wristPhotoUrl ?? "",
     w.brand, w.name, w.reference, w.caseSize, w.movement,
     w.powerReserve, w.image, w.recommendation,
+    "",               // P = variantPrefs (managed separately by upsertNotes)
+    w.variantsJson ?? "",  // Q = variantsJson
   ];
 }
 
@@ -198,7 +203,7 @@ export async function getAllRows(): Promise<SheetRow[]> {
 export async function upsertWatch(watch: {
   id: string; rank: number; brand: string; name: string; reference: string;
   caseSize: string; movement: string; powerReserve: string;
-  image: string; recommendation: string;
+  image: string; recommendation: string; variantsJson?: string;
 }): Promise<void> {
   const sheets = await client();
   await ensureHeaders(sheets);
@@ -212,7 +217,7 @@ export async function upsertWatch(watch: {
       requestBody: { values: [watchToRow({ ...watch, tier: "", fitScore: 0, dialScore: 0, overallNotes: "", wristPhotoUrl: "" })] },
     });
   } else {
-    // Update rank (B) and catalog fields (H:O) only — never touch scores/notes/tier in C:G
+    // Update rank (B), catalog fields (H:O), and variantsJson (Q) only
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: sheetId(),
       requestBody: {
@@ -226,6 +231,7 @@ export async function upsertWatch(watch: {
               watch.movement, watch.powerReserve, watch.image, watch.recommendation,
             ]],
           },
+          { range: `${TAB}!Q${rowIdx}`, values: [[watch.variantsJson ?? ""]] },
         ],
       },
     });
