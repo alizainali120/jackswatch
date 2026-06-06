@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { randomUUID } from "crypto";
 import { DEFAULT_WATCHES } from "@/lib/watchData";
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -167,7 +168,27 @@ export async function getAllRows(): Promise<SheetRow[]> {
     return seedRows.map(rowToSheetRow);
   }
 
-  return rows.slice(1).map(rowToSheetRow).filter((r) => r.id !== "");
+  const dataRows = rows.slice(1);
+  const idWrites: { range: string; values: string[][] }[] = [];
+
+  const processed = dataRows.map((row, i) => {
+    const sheetRow = rowToSheetRow(row);
+    // Auto-assign id for rows added directly in the Sheet (has a name but no id)
+    if (!sheetRow.id && sheetRow.name) {
+      sheetRow.id = `watch-${randomUUID().slice(0, 8)}`;
+      idWrites.push({ range: `${TAB}!A${i + 2}`, values: [[sheetRow.id]] });
+    }
+    return sheetRow;
+  });
+
+  if (idWrites.length > 0) {
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: sheetId(),
+      requestBody: { valueInputOption: "RAW", data: idWrites },
+    });
+  }
+
+  return processed.filter((r) => r.id !== "" && r.name !== "");
 }
 
 export async function upsertWatch(watch: {
