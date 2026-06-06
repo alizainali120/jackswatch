@@ -31,7 +31,7 @@ function ScorePip({ label, value }: { label: string; value: number }) {
           />
         ))}
       </div>
-      <span className="text-[10px] text-zinc-500">{label}</span>
+      <span className="text-[10px] text-zinc-400">{label}</span>
       <span className="text-[10px] text-[#b8973a] font-semibold tabular-nums ml-auto">
         {value}/10
       </span>
@@ -116,7 +116,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
       <div className="flex flex-col flex-1 p-4 gap-3">
         {/* Brand + name + ref */}
         <div>
-          <p className="text-[9px] tracking-[0.25em] uppercase text-zinc-600 mb-0.5 font-medium">
+          <p className="text-[9px] tracking-[0.25em] uppercase text-zinc-500 mb-0.5 font-medium">
             {watch.brand}
           </p>
           <h3
@@ -126,7 +126,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
             {watch.name}
           </h3>
           <p
-            className="text-[10px] text-zinc-600 mt-0.5"
+            className="text-[10px] text-zinc-500 mt-0.5"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             Ref. {watch.reference}
@@ -135,7 +135,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
 
         {/* Key specs */}
         <div
-          className="flex items-center gap-0 text-[10px] text-zinc-500"
+          className="flex items-center gap-0 text-[10px] text-zinc-400"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           <span>{watch.caseSize}</span>
@@ -147,7 +147,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
 
         {/* Ali's recommendation */}
         {watch.recommendation && (
-          <p className="text-[11px] text-zinc-500 italic leading-relaxed border-l-2 border-[#b8973a]/30 pl-2.5">
+          <p className="text-[11px] text-zinc-400 italic leading-relaxed border-l-2 border-[#b8973a]/30 pl-2.5">
             {watch.recommendation}
           </p>
         )}
@@ -180,7 +180,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
                   "text-[9px] px-2 py-0.5 rounded-full border transition-all",
                   watch.tier === t
                     ? TIER_COLORS[t]
-                    : "border-zinc-800 text-zinc-700 hover:border-zinc-700 hover:text-zinc-500"
+                    : "border-zinc-800 text-zinc-600 hover:border-zinc-700 hover:text-zinc-400"
                 )}
               >
                 {TIER_LABELS[t]}
@@ -207,7 +207,7 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
         {watch.notes?.overallNotes && (
           <div className="flex items-start gap-1.5 pt-2 border-t border-zinc-800">
             <StickyNote size={11} className="text-zinc-700 mt-0.5 flex-shrink-0" />
-            <p className="text-[10px] text-zinc-600 line-clamp-2 leading-relaxed">
+            <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">
               {watch.notes.overallNotes}
             </p>
           </div>

@@ -248,7 +248,7 @@ export function AppClient() {
             )}
           >
             <div className="hidden lg:flex items-center justify-between mb-3">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-600">
+              <span className="text-[10px] uppercase tracking-widest text-zinc-500">
                 {watches.length} watches
               </span>
               <Link

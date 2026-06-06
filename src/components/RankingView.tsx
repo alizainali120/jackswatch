@@ -86,7 +86,7 @@ function SortableRow({ watch, index, onNotesClick }: RowProps) {
         {index === 0 ? (
           <Trophy size={13} className="text-[#b8973a] mx-auto" />
         ) : (
-          <span className="text-[11px] font-bold text-zinc-600">
+          <span className="text-[11px] font-bold text-zinc-500">
             {index + 1}
           </span>
         )}
@@ -114,7 +114,7 @@ function SortableRow({ watch, index, onNotesClick }: RowProps) {
       {/* Name */}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-zinc-200 truncate">{watch.name}</p>
-        <p className="text-[10px] text-zinc-600 truncate">{watch.brand}</p>
+        <p className="text-[10px] text-zinc-500 truncate">{watch.brand}</p>
       </div>
 
       {/* Score */}
@@ -128,7 +128,7 @@ function SortableRow({ watch, index, onNotesClick }: RowProps) {
       ) : (
         <button
           onClick={onNotesClick}
-          className="flex-shrink-0 text-[10px] text-zinc-700 hover:text-zinc-400 transition-colors"
+          className="flex-shrink-0 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
         >
           Rate
         </button>
@@ -178,7 +178,7 @@ export function RankingView({ watches, onReorder, onNotesClick }: Props) {
             Leaderboard
           </span>
         </div>
-        <span className="text-[10px] text-zinc-600">drag to reorder</span>
+        <span className="text-[10px] text-zinc-500">drag to reorder</span>
       </div>
 
       {/* List */}
