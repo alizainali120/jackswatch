@@ -102,7 +102,12 @@ export function SummaryClient() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <Loader2 size={16} className="animate-spin text-zinc-600" />
+        <div className="flex items-center gap-3 text-zinc-600">
+          <Loader2 size={16} className="animate-spin" />
+          <span className="text-xs tracking-widest uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+            Loading
+          </span>
+        </div>
       </div>
     );
   }
