@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, ExternalLink, Star } from "lucide-react";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
-import { cn, STRAP_LABELS } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 
 interface VariantBlockProps {
@@ -17,14 +17,7 @@ function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBloc
   const isPreferred = variant.reaction === "preferred";
   const isPassed = variant.reaction === "pass";
 
-  const specs = [
-    variant.size,
-    `${variant.dialColor} Dial`,
-    variant.strapColor,
-    STRAP_LABELS[variant.strapType],
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const specs = variant.label || "";
 
   return (
     <div
