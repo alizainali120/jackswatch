@@ -49,14 +49,6 @@ interface WatchRowProps {
 }
 
 export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRowProps) {
-  const preferredCount = model.variants.filter((v) => v.reaction === "preferred").length;
-  const passedCount = model.variants.filter((v) => v.reaction === "pass").length;
-  const topPickVariant = model.variants.find((v) => v.id === model.topPickVariantId);
-  const isRated = model.variants.some((v) => v.reaction !== null);
-
-  const tally: string[] = [];
-  if (preferredCount > 0) tally.push(`${preferredCount} preferred`);
-  if (passedCount > 0) tally.push(`${passedCount} passed`);
 
   const gradient = getBrandGradient(model.brand);
 
@@ -66,20 +58,21 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
 
         {/* ── Rank arrows — left of image, desktop only ───────────────────── */}
         {rank !== null && (
-          <div className="hidden sm:flex flex-col items-center justify-center gap-1 px-2 bg-zinc-950">
+          <div className="hidden sm:flex flex-col items-center justify-center gap-0.5 w-8 bg-zinc-950 border-r border-zinc-900">
             <button
               onClick={onMoveUp}
               disabled={!onMoveUp}
-              className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-[#b8973a] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+              className="w-full flex-1 flex items-center justify-center text-zinc-600 hover:text-[#FAF6EE] hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
             >
-              <ChevronUp size={18} />
+              <ChevronUp size={14} strokeWidth={1.5} />
             </button>
+            <div className="w-4 h-px bg-zinc-800" />
             <button
               onClick={onMoveDown}
               disabled={!onMoveDown}
-              className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-[#b8973a] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+              className="w-full flex-1 flex items-center justify-center text-zinc-600 hover:text-[#FAF6EE] hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
             >
-              <ChevronDown size={18} />
+              <ChevronDown size={14} strokeWidth={1.5} />
             </button>
           </div>
         )}
@@ -117,16 +110,12 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
           {/* Rank badge — overlaid top-left corner */}
           {rank !== null && (
             <div className="absolute top-2 left-2 min-w-[22px] h-[22px] bg-black/75 px-1 flex items-center justify-center">
-              {rank === 1 ? (
-                <span className="text-[11px] leading-none">🏆</span>
-              ) : (
-                <span
-                  className="text-[10px] text-zinc-300 leading-none"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  {rank}
-                </span>
-              )}
+              <span
+                className="text-[10px] text-zinc-300 leading-none"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {rank}
+              </span>
             </div>
           )}
         </div>
@@ -170,25 +159,13 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
             ))}
           </div>
 
-          {/* Footer: separator + rating summary + notes snippet */}
-          {(isRated || model.notes) && (
+          {/* Footer: notes snippet */}
+          {model.notes && (
             <>
               <div className="h-px bg-[#b8973a]/10" />
-              <div className="space-y-0.5">
-                {isRated && (
-                  <p className="text-[10px] text-[#FAF6EE]" style={{ fontFamily: "var(--font-mono)" }}>
-                    {topPickVariant && (
-                      <span className="text-[#b8973a]">★ {topPickVariant.label} · </span>
-                    )}
-                    {tally.join(" · ")}
-                  </p>
-                )}
-                {model.notes && (
-                  <p className="text-[11px] text-[#FAF6EE]/45 italic leading-snug line-clamp-1">
-                    {model.notes}
-                  </p>
-                )}
-              </div>
+              <p className="text-[11px] text-[#FAF6EE]/45 italic leading-snug">
+                {model.notes}
+              </p>
             </>
           )}
         </div>
