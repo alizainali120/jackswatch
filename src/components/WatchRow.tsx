@@ -91,52 +91,54 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
             )}
           </div>
 
-          {/* Rank reorder widget — overlaid top-right of image */}
-          {rank !== null && (
-            <div className="absolute top-3 right-3 flex flex-col items-center bg-black/70 border border-zinc-700 backdrop-blur-sm">
-              <button
-                onClick={onMoveUp}
-                disabled={!onMoveUp}
-                title="Move up"
-                className="px-3 py-1.5 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900/80 transition-all disabled:opacity-25 active:bg-zinc-800"
-              >
-                <ChevronUp size={14} strokeWidth={2} />
-              </button>
-              <span
-                className="text-[12px] font-medium text-zinc-200 tabular-nums border-t border-b border-zinc-700 px-3 py-0.5 w-full text-center"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {rank}
-              </span>
-              <button
-                onClick={onMoveDown}
-                disabled={!onMoveDown}
-                title="Move down"
-                className="px-3 py-1.5 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900/80 transition-all disabled:opacity-25 active:bg-zinc-800"
-              >
-                <ChevronDown size={14} strokeWidth={2} />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 px-4 pt-2 pb-3 flex flex-col gap-1">
 
-          {/* Header: brand + name */}
-          <div className="min-w-0">
-            <p
-              className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              {model.brand}
-            </p>
-            <p
-              className="text-lg font-light text-[#FAF6EE] leading-tight"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {model.name}
-            </p>
+          {/* Header: brand + name + rank widget */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p
+                className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {model.brand}
+              </p>
+              <p
+                className="text-lg font-light text-[#FAF6EE] leading-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {model.name}
+              </p>
+            </div>
+
+            {rank !== null && (
+              <div className="flex items-center gap-0 border border-zinc-700 flex-shrink-0 mt-0.5">
+                <button
+                  onClick={onMoveUp}
+                  disabled={!onMoveUp}
+                  title="Move up"
+                  className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
+                >
+                  <ChevronUp size={12} strokeWidth={2} />
+                </button>
+                <span
+                  className="text-[11px] font-medium text-zinc-200 tabular-nums border-l border-r border-zinc-700 px-2 py-1 text-center"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  {rank}
+                </span>
+                <button
+                  onClick={onMoveDown}
+                  disabled={!onMoveDown}
+                  title="Move down"
+                  className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
+                >
+                  <ChevronDown size={12} strokeWidth={2} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Separator */}
@@ -175,7 +177,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
               className="border border-[#b8973a] text-[#b8973a] px-3 py-1.5 text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              Rate →
+              Rate
             </button>
           </div>
         </div>
