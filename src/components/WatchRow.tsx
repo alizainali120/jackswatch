@@ -64,14 +64,14 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
       <div className="flex flex-col sm:flex-row">
 
         {/* ── Image ──────────────────────────────────────────────────────── */}
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 self-stretch">
           {/* Mobile: full-width banner, 180px tall */}
           {/* Desktop: 96×128 portrait, left-anchored */}
           <div
             className={cn(
               "overflow-hidden bg-gradient-to-b",
               gradient,
-              "h-[180px] w-full sm:h-32 sm:w-24"
+              "h-[180px] w-full sm:h-full sm:w-24"
             )}
           >
             {model.heroImage ? (
@@ -79,7 +79,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
               <img
                 src={model.heroImage}
                 alt=""
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-cover object-center"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

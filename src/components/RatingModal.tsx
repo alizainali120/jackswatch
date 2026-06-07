@@ -10,11 +10,12 @@ import { cn } from "@/lib/utils";
 interface VariantBlockProps {
   variant: WatchVariant;
   isTopPick: boolean;
+  preferredCount: number;
   onReact: (reaction: Reaction | null) => void;
   onSetTopPick: () => void;
 }
 
-function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBlockProps) {
+function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPick }: VariantBlockProps) {
   const isPreferred = variant.reaction === "preferred";
   const isPassed = variant.reaction === "pass";
 
@@ -79,7 +80,7 @@ function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBloc
           ✕ Pass
         </button>
 
-        {isPreferred && (
+        {isPreferred && preferredCount > 1 && (
           <button
             onClick={onSetTopPick}
             className={cn(
@@ -242,6 +243,7 @@ export function RatingModal({
                   key={v.id}
                   variant={v}
                   isTopPick={model.topPickVariantId === v.id}
+                  preferredCount={model.variants.filter((x) => x.reaction === "preferred").length}
                   onReact={(reaction) => {
                     if (v.reaction === "preferred" && reaction !== "preferred" && model.topPickVariantId === v.id) {
                       onSetTopPick(null);
