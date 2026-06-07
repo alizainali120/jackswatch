@@ -33,7 +33,7 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
               style={{ fontFamily: "var(--font-mono)" }}
             >
               <span className="text-zinc-400 print:text-zinc-500">{model.brand}</span>
-              <span className="text-zinc-600 print:text-zinc-400 mx-1">/</span>
+              <span className="text-zinc-600 print:text-zinc-400 mx-1">-</span>
               {model.name}
             </p>
           </div>
