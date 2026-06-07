@@ -290,13 +290,6 @@ export function WatchCard({ watch, onNotesClick, onUpdate }: Props) {
           </div>
         )}
 
-        {/* Recommendation */}
-        {watch.recommendation && (
-          <p className="text-[11px] text-zinc-400 italic leading-relaxed border-l-2 border-[#b8973a]/30 pl-2.5">
-            {watch.recommendation}
-          </p>
-        )}
-
         {/* Scores */}
         {hasScores && (
           <div className="space-y-1.5 pt-1 border-t border-zinc-800">
