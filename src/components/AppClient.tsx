@@ -159,6 +159,17 @@ export function AppClient() {
     setModels((prev) => prev.map((m) => m.id !== modelId ? m : { ...m, heroImage: url }));
   }, []);
 
+  const handleAddVariant = useCallback(async (modelId: string, reference: string, label: string, link?: string) => {
+    const res = await fetch(`/api/watches/${modelId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference, label, link }),
+    });
+    if (!res.ok) throw new Error("Failed to add variant");
+    const newVariant = await res.json();
+    setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, variants: [...m.variants, newVariant] } : m));
+  }, []);
+
   const handleUpdateNotes = useCallback((modelId: string, notes: string) => {
     setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, notes } : m));
     setSaving(true);
@@ -401,6 +412,7 @@ export function AppClient() {
           onSetTopPick={(variantId) => handleSetTopPick(activeModel.id, variantId)}
           onUpdateNotes={(notes) => handleUpdateNotes(activeModel.id, notes)}
           onUpdateImage={(url) => handleUpdateImage(activeModel.id, url)}
+          onAddVariant={(ref, label, link) => handleAddVariant(activeModel.id, ref, label, link)}
         />
       )}
     </div>

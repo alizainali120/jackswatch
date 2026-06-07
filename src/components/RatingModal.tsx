@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, ExternalLink, Star, Upload, Loader2 } from "lucide-react";
+import { X, ExternalLink, Star, Upload, Loader2, Plus } from "lucide-react";
 import { compressImage } from "@/lib/storage";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 import { cn } from "@/lib/utils";
@@ -108,6 +108,7 @@ interface RatingModalProps {
   onSetTopPick: (variantId: string | null) => void;
   onUpdateNotes: (notes: string) => void;
   onUpdateImage: (url: string) => void;
+  onAddVariant: (reference: string, label: string, link?: string) => Promise<void>;
 }
 
 export function RatingModal({
@@ -117,12 +118,18 @@ export function RatingModal({
   onSetTopPick,
   onUpdateNotes,
   onUpdateImage,
+  onAddVariant,
 }: RatingModalProps) {
   const [visible, setVisible] = useState(false);
   const [localNotes, setLocalNotes] = useState(model.notes);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [addingVariant, setAddingVariant] = useState(false);
+  const [newRef, setNewRef] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [newLink, setNewLink] = useState("");
+  const [savingVariant, setSavingVariant] = useState(false);
 
   async function handleImageUpload(file: File) {
     setUploadError(null);
@@ -156,6 +163,20 @@ export function RatingModal({
   function handleNotesBlur() {
     if (localNotes !== model.notes) {
       onUpdateNotes(localNotes);
+    }
+  }
+
+  async function handleSaveVariant() {
+    if (!newRef.trim()) return;
+    setSavingVariant(true);
+    try {
+      await onAddVariant(newRef.trim(), newLabel.trim(), newLink.trim() || undefined);
+      setNewRef("");
+      setNewLabel("");
+      setNewLink("");
+      setAddingVariant(false);
+    } finally {
+      setSavingVariant(false);
     }
   }
 
@@ -232,6 +253,60 @@ export function RatingModal({
                 />
               ))}
             </div>
+
+            {/* Inline add-variant form */}
+            {addingVariant ? (
+              <div className="pt-3 space-y-2.5 border-t border-zinc-900">
+                <input
+                  autoFocus
+                  value={newRef}
+                  onChange={(e) => setNewRef(e.target.value)}
+                  placeholder="Reference (e.g. 124060)"
+                  className="w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-[11px] text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                />
+                <input
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="Label (e.g. 41mm · Black · Bracelet)"
+                  className="w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-[11px] text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                />
+                <input
+                  value={newLink}
+                  onChange={(e) => setNewLink(e.target.value)}
+                  placeholder="Link (optional)"
+                  className="w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-[11px] text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors"
+                  style={{ fontFamily: "var(--font-sans)" }}
+                />
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={handleSaveVariant}
+                    disabled={!newRef.trim() || savingVariant}
+                    className="text-[10px] tracking-widest uppercase px-3 py-1.5 bg-[#F5E6C8] text-black hover:bg-[#FAF6EE] transition-colors disabled:opacity-40"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    {savingVariant ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    onClick={() => { setAddingVariant(false); setNewRef(""); setNewLabel(""); setNewLink(""); }}
+                    className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors uppercase tracking-widest"
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setAddingVariant(true)}
+                className="flex items-center gap-1.5 mt-3 text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                <Plus size={11} />
+                Add variant
+              </button>
+            )}
           </section>
 
           {/* PHOTO */}

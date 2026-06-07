@@ -310,6 +310,34 @@ export async function createModel(
   return newModel;
 }
 
+export async function createVariant(
+  modelId: string,
+  data: { reference: string; label: string; link?: string }
+): Promise<WatchVariant> {
+  const sheets = await client();
+  const variant: WatchVariant = {
+    id: `v_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    modelId,
+    reference: data.reference,
+    label: data.label,
+    size: undefined,
+    dialColor: "",
+    strapType: "bracelet",
+    strapColor: "",
+    condition: "new",
+    priceRange: undefined,
+    link: data.link || undefined,
+    reaction: null,
+  };
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId(),
+    range: `${VARIANTS_TAB}!A:L`,
+    valueInputOption: "RAW",
+    requestBody: { values: [variantToRow(variant)] },
+  });
+  return variant;
+}
+
 export async function saveModelRanks(ranks: { id: string; rank: number }[]): Promise<void> {
   const sheets = await client();
   const res = await sheets.spreadsheets.values.get({
