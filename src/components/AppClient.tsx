@@ -8,14 +8,6 @@ import { AddWatchModal } from "@/components/AddWatchModal";
 import { Watch as WatchIcon, Loader2, AlertCircle, Plus } from "lucide-react";
 import Link from "next/link";
 
-const STEPS = [
-  { label: "Rate →", desc: "Open any watch and mark each variant Preferred or Pass." },
-  { label: "Ranked", desc: "Mark at least one variant Preferred and it moves to Ranked automatically." },
-  { label: "Discarded", desc: "Pass on all variants and the watch moves to Discarded." },
-  { label: "↑ ↓", desc: "Reorder ranked watches using the arrows." },
-  { label: "Summary →", desc: "Print or share your final verdict." },
-];
-
 function HowToGuide() {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
@@ -45,24 +37,12 @@ function HowToGuide() {
             dismiss
           </button>
         </div>
-        <ol className="space-y-2">
-          {STEPS.map((s) => (
-            <li key={s.label} className="flex items-baseline gap-3">
-              <span
-                className="text-[10px] text-[#b8973a] flex-shrink-0 w-16"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {s.label}
-              </span>
-              <span
-                className="text-[11px] text-zinc-500 leading-snug"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {s.desc}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <p
+          className="text-[11px] text-zinc-500 leading-snug"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          Rate each variant Preferred or Pass. Watches with a preferred variant move to Ranked — reorder them with the arrows. Pass on all variants and the watch is Discarded. Share your picks via Summary.
+        </p>
       </div>
     </div>
   );
