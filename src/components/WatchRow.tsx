@@ -61,15 +61,14 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
 
   return (
     <div className={cn("bg-black", isPassed && "opacity-50 saturate-0")}>
-      <div className="flex flex-col">
+      <div className="flex flex-row gap-0">
 
-        {/* ── Image — full-width landscape banner on all screen sizes ──── */}
-        <div className="relative flex-shrink-0">
+        {/* ── Image thumbnail ─────────────────────────────────────────────── */}
+        <div className="relative flex-shrink-0 w-[90px] sm:w-[120px]">
           <div
             className={cn(
-              "overflow-hidden bg-gradient-to-b",
-              gradient,
-              "h-[180px] sm:h-[220px] w-full"
+              "overflow-hidden bg-gradient-to-b h-full min-h-[90px] sm:min-h-[110px]",
+              gradient
             )}
           >
             {model.heroImage ? (
@@ -82,19 +81,18 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <span
-                  className="text-white/15 font-light"
-                  style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2rem, 6vw, 3.5rem)" }}
+                  className="text-white/15 font-light text-2xl"
+                  style={{ fontFamily: "var(--font-display)" }}
                 >
                   {model.brand[0]}
                 </span>
               </div>
             )}
           </div>
-
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-4 pt-2 pb-3 flex flex-col gap-1">
+        <div className="flex-1 min-w-0 px-3 pt-2 pb-2 flex flex-col gap-1">
 
           {/* Header: brand + name + rank widget */}
           <div className="flex items-start justify-between gap-2">
@@ -106,7 +104,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
                 {model.brand}
               </p>
               <p
-                className="text-lg font-light text-[#FAF6EE] leading-tight"
+                className="text-base font-light text-[#FAF6EE] leading-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {model.name}
