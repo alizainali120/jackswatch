@@ -19,12 +19,20 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
   return (
     <div className="py-5 border-b border-zinc-800/40 print:border-zinc-300 last:border-0 print:py-4">
       <div className="flex items-baseline gap-3">
-        <span
-          className="text-[10px] text-zinc-600 print:text-zinc-500 tabular-nums w-5 flex-shrink-0 pt-px"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          {rank}.
-        </span>
+        <div className="flex flex-col items-center flex-shrink-0 w-5">
+          <span
+            className="text-[10px] text-zinc-600 print:text-zinc-500 tabular-nums leading-none"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            {rank}
+          </span>
+          <span
+            className="hidden print:block text-[7px] uppercase tracking-widest text-zinc-400 leading-none mt-0.5"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            rank
+          </span>
+        </div>
         <div className="flex-1 min-w-0">
           <div className="mb-2">
             <span
@@ -56,7 +64,7 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
                       )}
                       style={{ fontFamily: "var(--font-mono)" }}
                     >
-                      {v.reference}
+                      {v.reference}{isTopPick && " [top pick]"}
                     </span>
                     {v.label && (
                       <span
@@ -64,14 +72,6 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
                         style={{ fontFamily: "var(--font-mono)" }}
                       >
                         · {v.label}
-                      </span>
-                    )}
-                    {isTopPick && (
-                      <span
-                        className="text-[10px] text-zinc-600 print:text-zinc-500 leading-relaxed"
-                        style={{ fontFamily: "var(--font-mono)" }}
-                      >
-                        [top pick]
                       </span>
                     )}
                   </div>
@@ -132,7 +132,7 @@ export function SummaryClient() {
           className="text-4xl font-light tracking-[0.2em] uppercase text-[#FAF6EE] print:text-black mb-1"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Jack&apos;s Verdict
+          Jack&apos;s Watch Preferences
         </h1>
         <p className="text-[10px] tracking-widest text-zinc-600 print:text-zinc-500 uppercase mb-4">
           {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
@@ -153,33 +153,23 @@ export function SummaryClient() {
           </div>
         )}
 
-        {/* Footer + QR */}
+        {/* Footer — screen only */}
         {models.length > 0 && (
-          <div className="mt-10 pt-6 border-t border-zinc-800 print:border-zinc-300 flex items-center justify-between">
+          <div className="mt-10 pt-6 border-t border-zinc-800 flex items-center justify-between print:hidden">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600 print:text-zinc-500">Jack&apos;s Watch Guide</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600">Jack&apos;s Watch Guide</p>
               <p
-                className="text-[10px] text-zinc-700 print:text-zinc-500 mt-0.5"
+                className="text-[10px] text-zinc-700 mt-0.5"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 alizainali.com/jackswatch
               </p>
             </div>
-            {/* Screen: white on dark */}
             <QRCodeSVG
               value="https://alizainali.com/jackswatch"
               size={56}
               bgColor="transparent"
               fgColor="#ffffff"
-              className="print:hidden"
-            />
-            {/* Print: black on white */}
-            <QRCodeSVG
-              value="https://alizainali.com/jackswatch"
-              size={56}
-              bgColor="transparent"
-              fgColor="#000000"
-              className="hidden print:block"
             />
           </div>
         )}
