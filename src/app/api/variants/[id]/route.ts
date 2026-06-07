@@ -8,10 +8,10 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { reaction, tryAgain } = await req.json();
-    const validReactions: Array<Reaction | null> = ["love", "consider", "pass", null];
+    const { reaction } = await req.json();
+    const validReactions: Array<Reaction | null> = ["preferred", "pass", null];
     const r: Reaction | null = validReactions.includes(reaction) ? reaction : null;
-    await updateVariantReaction(id, r, Boolean(tryAgain));
+    await updateVariantReaction(id, r);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[PUT /api/variants/[id]]", err);

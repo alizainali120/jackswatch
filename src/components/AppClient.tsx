@@ -2,17 +2,61 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { WatchModel, Reaction } from "@/types/watch";
-import { ModelCard } from "@/components/ModelCard";
-import { RatingModal } from "@/components/RatingModal";
-import { Watch as WatchIcon, Trophy, Share2, Loader2, AlertCircle } from "lucide-react";
+import { WatchRow } from "@/components/WatchRow";
+import { cn } from "@/lib/utils";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
+} from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Watch as WatchIcon, Share2, Loader2, AlertCircle, GripVertical } from "lucide-react";
 import Link from "next/link";
+
+function SortableWatchRow({
+  model,
+  isReordering,
+  onUpdateVariant,
+  onSetTopPick,
+  onUpdateNotes,
+  onUpdateReactionTags,
+}: {
+  model: WatchModel;
+  isReordering: boolean;
+  onUpdateVariant: (variantId: string, reaction: Reaction | null) => void;
+  onSetTopPick: (variantId: string | null) => void;
+  onUpdateNotes: (notes: string) => void;
+  onUpdateReactionTags: (tags: string[]) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: model.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <WatchRow
+      model={model}
+      isReordering={isReordering}
+      isDragging={isDragging}
+      dragRef={setNodeRef}
+      dragStyle={style}
+      dragHandleProps={{ ...attributes, ...listeners }}
+      onUpdateVariant={onUpdateVariant}
+      onSetTopPick={onSetTopPick}
+      onUpdateNotes={onUpdateNotes}
+      onUpdateReactionTags={onUpdateReactionTags}
+    />
+  );
+}
 
 export function AppClient() {
   const [models, setModels] = useState<WatchModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [activeModel, setActiveModel] = useState<WatchModel | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   const variantTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -25,26 +69,20 @@ export function AppClient() {
       .then((data) => { setModels(data); setLoading(false); })
       .catch((err) => {
         console.error(err);
-        setError("Couldn't reach the server. Check your connection.");
+        setError("Couldn't reach the server.");
         setLoading(false);
       });
   }, []);
 
   const handleUpdateVariant = useCallback(
-    (modelId: string, variantId: string, reaction: Reaction | null, tryAgain: boolean) => {
+    (modelId: string, variantId: string, reaction: Reaction | null) => {
       setModels((prev) =>
         prev.map((m) =>
           m.id !== modelId
             ? m
-            : { ...m, variants: m.variants.map((v) => v.id === variantId ? { ...v, reaction, tryAgain } : v) }
+            : { ...m, variants: m.variants.map((v) => v.id === variantId ? { ...v, reaction } : v) }
         )
       );
-      setActiveModel((prev) =>
-        prev?.id !== modelId
-          ? prev
-          : { ...prev, variants: prev.variants.map((v) => v.id === variantId ? { ...v, reaction, tryAgain } : v) }
-      );
-
       const existing = variantTimers.current.get(variantId);
       if (existing) clearTimeout(existing);
       const timer = setTimeout(async () => {
@@ -54,19 +92,33 @@ export function AppClient() {
           await fetch(`/api/variants/${variantId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reaction, tryAgain }),
+            body: JSON.stringify({ reaction }),
           });
         } catch (err) { console.error("Variant save failed:", err); }
         finally { setSaving(false); }
-      }, 800);
+      }, 600);
       variantTimers.current.set(variantId, timer);
     },
     []
   );
 
+  const handleSetTopPick = useCallback(async (modelId: string, variantId: string | null) => {
+    setModels((prev) =>
+      prev.map((m) => m.id === modelId ? { ...m, topPickVariantId: variantId } : m)
+    );
+    setSaving(true);
+    try {
+      await fetch(`/api/watches/${modelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topPickVariantId: variantId }),
+      });
+    } catch (err) { console.error("Top pick save failed:", err); }
+    finally { setSaving(false); }
+  }, []);
+
   const handleUpdateNotes = useCallback(async (modelId: string, notes: string) => {
     setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, notes } : m));
-    setActiveModel((prev) => prev?.id === modelId ? { ...prev, notes } : prev);
     setSaving(true);
     try {
       await fetch(`/api/watches/${modelId}`, {
@@ -80,7 +132,6 @@ export function AppClient() {
 
   const handleUpdateReactionTags = useCallback(async (modelId: string, reactionTags: string[]) => {
     setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, reactionTags } : m));
-    setActiveModel((prev) => prev?.id === modelId ? { ...prev, reactionTags } : prev);
     setSaving(true);
     try {
       await fetch(`/api/watches/${modelId}`, {
@@ -90,6 +141,31 @@ export function AppClient() {
       });
     } catch (err) { console.error("Tags save failed:", err); }
     finally { setSaving(false); }
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setModels((prev) => {
+      const oldIdx = prev.findIndex((m) => m.id === active.id);
+      const newIdx = prev.findIndex((m) => m.id === over.id);
+      const reordered = arrayMove(prev, oldIdx, newIdx);
+      // Save ranks asynchronously
+      setSaving(true);
+      fetch("/api/watches/rank", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: reordered.map((m) => m.id) }),
+      })
+        .catch((err) => console.error("Rank save failed:", err))
+        .finally(() => setSaving(false));
+      return reordered;
+    });
   }, []);
 
   if (loading) {
@@ -103,20 +179,19 @@ export function AppClient() {
     );
   }
 
-  const activeModelFresh = activeModel
-    ? models.find((m) => m.id === activeModel.id) ?? activeModel
-    : null;
-
   return (
     <div className="min-h-screen bg-black text-[#FAF6EE]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-black/95 backdrop-blur-sm border-b border-zinc-800/50">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center flex-shrink-0">
               <WatchIcon size={11} className="text-[#b8973a]" />
             </div>
-            <span className="text-xs font-semibold tracking-widest uppercase text-zinc-100">
+            <span
+              className="text-xs font-semibold tracking-widest uppercase text-zinc-100"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
               Jack&apos;s Watch Guide
             </span>
           </div>
@@ -128,19 +203,27 @@ export function AppClient() {
                 Saving
               </span>
             )}
-            <Link
-              href="/rank"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700"
+
+            {/* Reorder toggle */}
+            <button
+              onClick={() => setIsReordering((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all",
+                isReordering
+                  ? "bg-[#b8973a]/15 border-[#b8973a]/40 text-[#b8973a]"
+                  : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
+              )}
             >
-              <Trophy size={12} />
-              <span className="hidden sm:inline">Ranking</span>
-            </Link>
+              <GripVertical size={12} />
+              Reorder
+            </button>
+
             <Link
               href="/summary"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#b8973a]/10 border border-[#b8973a]/20 text-[#b8973a] text-xs font-medium hover:bg-[#b8973a]/20 transition-colors"
             >
               <Share2 size={12} />
-              <span className="hidden sm:inline">Summary</span>
+              Summary
             </Link>
           </div>
         </div>
@@ -155,53 +238,49 @@ export function AppClient() {
         </div>
       )}
 
-      {/* Hero */}
-      <div className="text-center pt-10 pb-8 border-b border-[#b8973a]/10">
+      {/* Page title */}
+      <div className="max-w-2xl mx-auto px-4 pt-8 pb-4">
         <h1
-          className="text-5xl sm:text-6xl font-light tracking-[0.25em] uppercase text-[#FAF6EE]"
+          className="text-4xl font-light tracking-[0.2em] uppercase text-[#FAF6EE]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           The Collection
         </h1>
-        <p
-          className="mt-3 text-[10px] tracking-[0.25em] text-[#F5E6C8]/40"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          Tap a watch to rate it
-        </p>
       </div>
 
-      {/* Grid */}
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      {/* Watch rows */}
+      <main className="max-w-2xl mx-auto">
         {models.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-zinc-600 text-sm">No watches yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {models.map((model) => (
-              <ModelCard
-                key={model.id}
-                model={model}
-                onClick={() => setActiveModel(model)}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={models.map((m) => m.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {models.map((model) => (
+                <SortableWatchRow
+                  key={model.id}
+                  model={model}
+                  isReordering={isReordering}
+                  onUpdateVariant={(variantId, reaction) =>
+                    handleUpdateVariant(model.id, variantId, reaction)
+                  }
+                  onSetTopPick={(variantId) => handleSetTopPick(model.id, variantId)}
+                  onUpdateNotes={(notes) => handleUpdateNotes(model.id, notes)}
+                  onUpdateReactionTags={(tags) => handleUpdateReactionTags(model.id, tags)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
       </main>
-
-      {/* Rating modal */}
-      {activeModelFresh && (
-        <RatingModal
-          model={activeModelFresh}
-          onClose={() => setActiveModel(null)}
-          onUpdateVariant={(variantId: string, reaction: Reaction | null, tryAgain: boolean) =>
-            handleUpdateVariant(activeModelFresh.id, variantId, reaction, tryAgain)
-          }
-          onUpdateNotes={(notes: string) => handleUpdateNotes(activeModelFresh.id, notes)}
-          onUpdateReactionTags={(tags: string[]) => handleUpdateReactionTags(activeModelFresh.id, tags)}
-        />
-      )}
     </div>
   );
 }

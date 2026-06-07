@@ -1,8 +1,6 @@
-export type Reaction = "love" | "consider" | "pass";
+export type Reaction = "preferred" | "pass";
 export type Condition = "new" | "preowned";
 export type StrapType = "bracelet" | "leather" | "rubber" | "fabric";
-export type ConditionPref = "new" | "either" | "preowned";
-export type StrapPref = "bracelet" | "any" | "strap";
 
 export interface WatchVariant {
   id: string;
@@ -17,7 +15,6 @@ export interface WatchVariant {
   priceRange?: string;
   link?: string;
   reaction: Reaction | null;
-  tryAgain: boolean;
 }
 
 export interface WatchModel {
@@ -27,11 +24,7 @@ export interface WatchModel {
   heroImage: string;
   notes: string;
   reactionTags: string[];
+  topPickVariantId: string | null;
   rank: number;
   variants: WatchVariant[];
-}
-
-export interface GlobalPrefs {
-  condition: ConditionPref;
-  strap: StrapPref;
 }

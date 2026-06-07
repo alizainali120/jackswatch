@@ -8,6 +8,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     heroImage: "",
     notes: "The most recognizable dive watch ever made. Two personalities — the clean no-date and the practical date. Both wear identically on the wrist. The difference is philosophical.",
     reactionTags: [],
+    topPickVariantId: null,
     rank: 1,
     variants: [
       {
@@ -23,7 +24,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$8,100 – $8,800",
         link: "https://www.rolex.com/en-us/watches/submariner/m124060-0001",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-sub-126610ln",
@@ -38,7 +38,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$9,150 – $9,950",
         link: "https://www.rolex.com/en-us/watches/submariner/m126610ln-0001",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-sub-126610lv",
@@ -53,7 +52,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$14,500 – $16,000",
         link: "https://www.rolex.com/en-us/watches/submariner/m126610lv-0002",
         reaction: null,
-        tryAgain: false,
       },
     ],
   },
@@ -64,6 +62,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     heroImage: "",
     notes: "Omega's most versatile sports watch — dressier than the Diver but still substantial. The teak-pattern dial is genuinely beautiful in person. METAS Master Chronometer certified.",
     reactionTags: [],
+    topPickVariantId: null,
     rank: 2,
     variants: [
       {
@@ -79,7 +78,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$5,500 – $6,200",
         link: "https://www.omegawatches.com/watches/seamaster/aqua-terra-150m/41-mm",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-at-38-silver",
@@ -94,7 +92,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$5,000 – $5,800",
         link: "https://www.omegawatches.com/watches/seamaster/aqua-terra-150m/38-mm",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-at-41-green",
@@ -109,7 +106,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$5,500 – $6,200",
         link: "https://www.omegawatches.com/watches/seamaster/aqua-terra-150m/41-mm",
         reaction: null,
-        tryAgain: false,
       },
     ],
   },
@@ -120,6 +116,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     heroImage: "",
     notes: "The smartest buy in the lineup. 39mm has vintage proportions that actually work on modern wrists. In-house movement with Rolex DNA. Hard to argue with the value.",
     reactionTags: [],
+    topPickVariantId: null,
     rank: 3,
     variants: [
       {
@@ -135,7 +132,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$3,700 – $4,200",
         link: "https://www.tudorwatch.com/watches/black-bay/m79030b-0001",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-bb58-black",
@@ -150,7 +146,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$3,700 – $4,200",
         link: "https://www.tudorwatch.com/watches/black-bay/m79030n-0001",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-bb58-burgundy",
@@ -165,7 +160,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$4,100 – $4,600",
         link: "https://www.tudorwatch.com/watches/black-bay/m79030r-0001",
         reaction: null,
-        tryAgain: false,
       },
     ],
   },
@@ -176,6 +170,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     heroImage: "",
     notes: "Clean, functional, understated. The longest power reserve in this lineup. A watch for people who don't need anyone to know what they're wearing.",
     reactionTags: [],
+    topPickVariantId: null,
     rank: 4,
     variants: [
       {
@@ -191,7 +186,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$4,700 – $5,200",
         link: "https://www.iwc.com/en/watch-collections/pilot-watches/iw328203",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-markxx-black",
@@ -206,7 +200,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$4,700 – $5,200",
         link: "https://www.iwc.com/en/watch-collections/pilot-watches/iw328201",
         reaction: null,
-        tryAgain: false,
       },
     ],
   },
@@ -217,6 +210,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     heroImage: "",
     notes: "The wildcard. A square case in a world of round ones — 120 years old and still looks modern. If Jack wants to stand out from every other Rolex in the room, this is the move.",
     reactionTags: [],
+    topPickVariantId: null,
     rank: 5,
     variants: [
       {
@@ -232,7 +226,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$7,300 – $8,000",
         link: "https://www.cartier.com/en-us/collections/watches/mens-watches/santos-de-cartier/wssa0029",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-santos-large",
@@ -247,7 +240,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$7,600 – $8,300",
         link: "https://www.cartier.com/en-us/collections/watches/mens-watches/santos-de-cartier/wssa0061",
         reaction: null,
-        tryAgain: false,
       },
       {
         id: "var-santos-twotone",
@@ -262,7 +254,6 @@ export const DEFAULT_MODELS: WatchModel[] = [
         priceRange: "$11,500 – $12,500",
         link: "https://www.cartier.com/en-us/collections/watches/mens-watches/santos-de-cartier/w2sa0006",
         reaction: null,
-        tryAgain: false,
       },
     ],
   },

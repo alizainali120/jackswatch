@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateModelNotes, updateModelReactionTags } from "@/lib/googleSheets";
+import { updateModelNotes, updateModelReactionTags, updateModelTopPick } from "@/lib/googleSheets";
 
 export async function PUT(
   req: Request,
@@ -11,6 +11,7 @@ export async function PUT(
     const ops: Promise<void>[] = [];
     if (body.notes !== undefined) ops.push(updateModelNotes(id, String(body.notes)));
     if (body.reactionTags !== undefined) ops.push(updateModelReactionTags(id, body.reactionTags));
+    if ("topPickVariantId" in body) ops.push(updateModelTopPick(id, body.topPickVariantId ?? null));
     await Promise.all(ops);
     return NextResponse.json({ ok: true });
   } catch (err) {

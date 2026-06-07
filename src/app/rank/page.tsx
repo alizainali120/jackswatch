@@ -1,5 +1,5 @@
-import { RankClient } from "@/components/RankClient";
+import { redirect } from "next/navigation";
 
 export default function RankPage() {
-  return <RankClient />;
+  redirect("/");
 }

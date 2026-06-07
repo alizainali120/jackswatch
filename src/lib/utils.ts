@@ -13,21 +13,19 @@ export function generateId(): string {
 export function likenessScore(model: WatchModel): number | null {
   const rated = model.variants.filter((v) => v.reaction !== null);
   if (rated.length === 0) return null;
-  const loved = model.variants.filter((v) => v.reaction === "love").length;
-  return Math.round((loved / model.variants.length) * 100);
+  const preferred = model.variants.filter((v) => v.reaction === "preferred").length;
+  return Math.round((preferred / model.variants.length) * 100);
 }
 
 export function ratingLabel(model: WatchModel): string {
-  const loved = model.variants.filter((v) => v.reaction === "love").length;
-  const consider = model.variants.filter((v) => v.reaction === "consider").length;
+  const preferred = model.variants.filter((v) => v.reaction === "preferred").length;
   const pass = model.variants.filter((v) => v.reaction === "pass").length;
-  const rated = loved + consider + pass;
-  if (rated === 0) return `${model.variants.length} variant${model.variants.length !== 1 ? "s" : ""}`;
+  const neutral = model.variants.filter((v) => v.reaction === null).length;
   const parts = [];
-  if (loved > 0) parts.push(`${loved} ❤️`);
-  if (consider > 0) parts.push(`${consider} 👍`);
-  if (pass > 0) parts.push(`${pass} ✕`);
-  return parts.join("  ·  ");
+  if (preferred > 0) parts.push(`${preferred} preferred`);
+  if (neutral > 0) parts.push(`${neutral} neutral`);
+  if (pass > 0) parts.push(`${pass} passed`);
+  return parts.join(" · ");
 }
 
 export const BRAND_GRADIENTS: Record<string, string> = {

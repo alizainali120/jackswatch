@@ -2,8 +2,6 @@ import { google } from "googleapis";
 import { DEFAULT_MODELS } from "@/lib/watchData";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
-
 function getAuth() {
   const client_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const private_key = process.env.GOOGLE_PRIVATE_KEY;
@@ -30,40 +28,35 @@ async function client() {
 }
 
 // ── Sheet layout ──────────────────────────────────────────────────────────────
-// Sheet "models"  : A=id  B=brand  C=name  D=heroImage  E=notes  F=rank  G=reactionTags(JSON)
-// Sheet "variants": A=id  B=modelId  C=reference  D=label  E=size  F=dialColor
-//                   G=strapType  H=strapColor  I=condition  J=priceRange  K=link
-//                   L=reaction  M=tryAgain
-// Note: if reseeding, clear the "models" tab rows to pick up the new column layout.
+// "models"  : A=id  B=brand  C=name  D=heroImage  E=notes  F=rank
+//             G=reactionTags(JSON)  H=topPickVariantId
+// "variants": A=id  B=modelId  C=reference  D=label  E=size  F=dialColor
+//             G=strapType  H=strapColor  I=condition  J=priceRange  K=link
+//             L=reaction
+// To reseed: clear data rows (not header) in both tabs.
 
 const MODELS_TAB = "models";
 const VARIANTS_TAB = "variants";
 
-const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "notes", "rank", "reactionTags"];
+const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "notes", "rank", "reactionTags", "topPickVariantId"];
 const VARIANTS_HEADERS = [
   "id", "modelId", "reference", "label", "size", "dialColor",
-  "strapType", "strapColor", "condition", "priceRange", "link", "reaction", "tryAgain",
+  "strapType", "strapColor", "condition", "priceRange", "link", "reaction",
 ];
-
-// ── Internal helpers ──────────────────────────────────────────────────────────
 
 async function ensureTab(
   sheets: Awaited<ReturnType<typeof client>>,
   tabName: string,
   headers: string[]
 ): Promise<void> {
-  // Ensure the tab exists — create it if not
   const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetId() });
   const exists = meta.data.sheets?.some((s) => s.properties?.title === tabName);
   if (!exists) {
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId: sheetId(),
-      requestBody: {
-        requests: [{ addSheet: { properties: { title: tabName } } }],
-      },
+      requestBody: { requests: [{ addSheet: { properties: { title: tabName } } }] },
     });
   }
-  // Ensure headers are written
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId(),
     range: `${tabName}!A1`,
@@ -96,8 +89,6 @@ async function findRowIndex(
   return idx <= 0 ? null : idx + 1;
 }
 
-// ── Row parsers ───────────────────────────────────────────────────────────────
-
 function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
   let reactionTags: string[] = [];
   try { reactionTags = JSON.parse(row[6] || "[]"); } catch {}
@@ -109,6 +100,7 @@ function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
     notes: row[4] ?? "",
     rank: parseInt(row[5]) || 99,
     reactionTags,
+    topPickVariantId: row[7] || null,
   };
 }
 
@@ -126,23 +118,23 @@ function rowToVariant(row: string[]): WatchVariant {
     priceRange: row[9] || undefined,
     link: row[10] || undefined,
     reaction: (row[11] as Reaction) || null,
-    tryAgain: row[12] === "true",
   };
 }
 
 function modelToRow(m: Omit<WatchModel, "variants">): string[] {
-  return [m.id, m.brand, m.name, m.heroImage, m.notes, String(m.rank), JSON.stringify(m.reactionTags ?? [])];
+  return [
+    m.id, m.brand, m.name, m.heroImage, m.notes,
+    String(m.rank), JSON.stringify(m.reactionTags ?? []), m.topPickVariantId ?? "",
+  ];
 }
 
 function variantToRow(v: WatchVariant): string[] {
   return [
     v.id, v.modelId, v.reference, v.label, v.size ?? "",
     v.dialColor, v.strapType, v.strapColor, v.condition,
-    v.priceRange ?? "", v.link ?? "", v.reaction ?? "", String(v.tryAgain),
+    v.priceRange ?? "", v.link ?? "", v.reaction ?? "",
   ];
 }
-
-// ── Public API ────────────────────────────────────────────────────────────────
 
 export async function getAllModels(): Promise<WatchModel[]> {
   const sheets = await client();
@@ -150,27 +142,26 @@ export async function getAllModels(): Promise<WatchModel[]> {
   await ensureTab(sheets, VARIANTS_TAB, VARIANTS_HEADERS);
 
   const [modelsRes, variantsRes] = await Promise.all([
-    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${MODELS_TAB}!A:G` }),
-    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:M` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${MODELS_TAB}!A:H` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:L` }),
   ]);
 
   const modelRows = (modelsRes.data.values ?? []).slice(1).filter((r) => r[0]);
   const variantRows = (variantsRes.data.values ?? []).slice(1).filter((r) => r[0]);
 
-  // Seed if empty
   if (modelRows.length === 0) {
     const allModelRows = DEFAULT_MODELS.map((m) => modelToRow(m));
     const allVariantRows = DEFAULT_MODELS.flatMap((m) => m.variants.map(variantToRow));
     await Promise.all([
       sheets.spreadsheets.values.append({
         spreadsheetId: sheetId(),
-        range: `${MODELS_TAB}!A:G`,
+        range: `${MODELS_TAB}!A:H`,
         valueInputOption: "RAW",
         requestBody: { values: allModelRows },
       }),
       sheets.spreadsheets.values.append({
         spreadsheetId: sheetId(),
-        range: `${VARIANTS_TAB}!A:M`,
+        range: `${VARIANTS_TAB}!A:L`,
         valueInputOption: "RAW",
         requestBody: { values: allVariantRows },
       }),
@@ -210,19 +201,27 @@ export async function updateModelReactionTags(id: string, tags: string[]): Promi
   });
 }
 
-export async function updateVariantReaction(
-  id: string,
-  reaction: Reaction | null,
-  tryAgain: boolean
-): Promise<void> {
+export async function updateModelTopPick(id: string, topPickVariantId: string | null): Promise<void> {
+  const sheets = await client();
+  const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
+  if (rowIdx === null) return;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${MODELS_TAB}!H${rowIdx}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[topPickVariantId ?? ""]] },
+  });
+}
+
+export async function updateVariantReaction(id: string, reaction: Reaction | null): Promise<void> {
   const sheets = await client();
   const rowIdx = await findRowIndex(sheets, VARIANTS_TAB, id);
   if (rowIdx === null) return;
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId(),
-    range: `${VARIANTS_TAB}!L${rowIdx}:M${rowIdx}`,
+    range: `${VARIANTS_TAB}!L${rowIdx}`,
     valueInputOption: "RAW",
-    requestBody: { values: [[reaction ?? "", String(tryAgain)]] },
+    requestBody: { values: [[reaction ?? ""]] },
   });
 }
 

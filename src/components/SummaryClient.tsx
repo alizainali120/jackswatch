@@ -3,31 +3,24 @@
 import { useState, useEffect } from "react";
 import type { WatchModel } from "@/types/watch";
 import { cn, likenessScore, getBrandGradient } from "@/lib/utils";
-import { ArrowLeft, Trophy, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Star, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
   const score = likenessScore(model);
-  const loved = model.variants.filter((v) => v.reaction === "love");
-  const considering = model.variants.filter((v) => v.reaction === "consider");
-  const tryAgain = model.variants.filter((v) => v.tryAgain);
+  const preferred = model.variants.filter((v) => v.reaction === "preferred");
+  const passed = model.variants.filter((v) => v.reaction === "pass");
+  const topPickVariant = model.variants.find((v) => v.id === model.topPickVariantId);
 
   return (
     <div className="border border-zinc-800 rounded-2xl overflow-hidden print:border-zinc-300">
-      {/* Model header */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-zinc-900/50 print:bg-zinc-100 border-b border-zinc-800 print:border-zinc-300">
-        <div className="flex-shrink-0 w-7 text-center">
-          {rank === 1 ? (
-            <Trophy size={14} className="text-[#b8973a] mx-auto" />
-          ) : (
-            <span className="text-sm font-bold text-zinc-500">{rank}</span>
-          )}
+        <div className="flex-shrink-0 w-6 text-center">
+          <span className="text-sm font-bold text-zinc-500">{rank}</span>
         </div>
-        <div
-          className={cn("w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br flex-shrink-0", getBrandGradient(model.brand))}
-        >
+        <div className={cn("w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br flex-shrink-0", getBrandGradient(model.brand))}>
           {model.heroImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={model.heroImage} alt="" className="w-full h-full object-cover" />
@@ -49,70 +42,83 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
         {score !== null && (
           <div className="flex-shrink-0 text-right">
             <span className="text-[#b8973a] text-sm font-semibold">{score}%</span>
-            <p className="text-[9px] text-zinc-600 print:text-zinc-500">likeness</p>
+            <p className="text-[9px] text-zinc-600 print:text-zinc-500">preferred</p>
           </div>
         )}
       </div>
 
       <div className="px-4 py-3 space-y-3">
-        {/* Loved */}
-        {loved.length > 0 && (
+        {/* Top pick */}
+        {topPickVariant && (
+          <div className="flex items-center gap-2">
+            <Star size={11} className="text-[#b8973a] fill-[#b8973a] flex-shrink-0" />
+            <span className="text-[11px] text-[#b8973a] font-medium">{topPickVariant.label}</span>
+            <span
+              className="text-[10px] text-zinc-600"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              {topPickVariant.reference}
+            </span>
+          </div>
+        )}
+
+        {/* Preferred variants */}
+        {preferred.length > 0 && (
           <div>
-            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1.5">Loved</p>
+            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1.5">Preferred</p>
             <div className="flex flex-wrap gap-1.5">
-              {loved.map((v) => (
+              {preferred.map((v) => (
                 <span
                   key={v.id}
-                  className="text-[11px] px-2.5 py-1 rounded-xl bg-rose-950/30 border border-rose-800/30 text-rose-300 print:bg-rose-50 print:border-rose-200 print:text-rose-700"
+                  className={cn(
+                    "text-[11px] px-2.5 py-1 rounded-xl border",
+                    v.id === model.topPickVariantId
+                      ? "bg-[#b8973a]/10 border-[#b8973a]/30 text-[#b8973a]"
+                      : "bg-[#F5E6C8]/5 border-[#F5E6C8]/15 text-[#F5E6C8]/80"
+                  )}
                 >
-                  ❤️ {v.label} {v.reference && <span className="opacity-60 font-mono">{v.reference}</span>}
+                  {v.id === model.topPickVariantId && "★ "}{v.label}
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* Considering */}
-        {considering.length > 0 && (
+        {/* Passed */}
+        {passed.length > 0 && (
           <div>
-            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1.5">Considering</p>
+            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1.5">Passed</p>
             <div className="flex flex-wrap gap-1.5">
-              {considering.map((v) => (
+              {passed.map((v) => (
                 <span
                   key={v.id}
-                  className="text-[11px] px-2.5 py-1 rounded-xl bg-amber-950/20 border border-amber-800/20 text-amber-400 print:bg-amber-50 print:border-amber-200 print:text-amber-700"
+                  className="text-[11px] px-2.5 py-1 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-600 line-through"
                 >
-                  👍 {v.label}
+                  {v.label}
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* Try again */}
-        {tryAgain.length > 0 && (
-          <div>
-            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1.5">Try again next time</p>
-            <div className="flex flex-wrap gap-1.5">
-              {tryAgain.map((v) => (
-                <span
-                  key={v.id}
-                  className="text-[11px] px-2.5 py-1 rounded-xl bg-blue-950/20 border border-blue-800/20 text-blue-400 print:bg-blue-50 print:border-blue-200 print:text-blue-700"
-                >
-                  ↩ {v.label}
-                </span>
-              ))}
-            </div>
+        {/* Quick tags */}
+        {model.reactionTags?.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {model.reactionTags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[10px] px-2 py-0.5 rounded-lg bg-[#b8973a]/10 text-[#b8973a]/80 border border-[#b8973a]/20"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         )}
 
         {/* Likeness bar */}
         {score !== null && (
           <div className="h-0.5 w-full bg-zinc-800 rounded-full print:bg-zinc-200 overflow-hidden">
-            <div
-              className="h-full bg-[#b8973a] rounded-full"
-              style={{ width: `${score}%` }}
-            />
+            <div className="h-full bg-[#b8973a] rounded-full" style={{ width: `${score}%` }} />
           </div>
         )}
 
@@ -152,8 +158,8 @@ export function SummaryClient() {
     );
   }
 
-  const lovedModels = models.filter((m) => m.variants.some((v) => v.reaction === "love"));
-  const topPick = lovedModels[0] ?? null;
+  const topModel = models.find((m) => m.topPickVariantId || m.variants.some((v) => v.reaction === "preferred"));
+  const topPickVariant = topModel?.variants.find((v) => v.id === topModel.topPickVariantId);
 
   return (
     <div className="min-h-screen bg-black text-[#FAF6EE] print:bg-white print:text-black">
@@ -180,22 +186,26 @@ export function SummaryClient() {
           Jack&apos;s Verdict
         </h1>
         <p className="text-[10px] tracking-widest text-zinc-600 uppercase mb-2">
-          Jack&apos;s Watch Guide · {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </p>
 
         {/* Top pick hero */}
-        {topPick && (
-          <div className="mt-6 mb-8 px-4 py-4 rounded-2xl border border-[#b8973a]/20 bg-[#b8973a]/5 print:bg-yellow-50 print:border-yellow-200">
+        {(topPickVariant || topModel) && (
+          <div className="mt-6 mb-8 px-4 py-4 rounded-2xl border border-[#b8973a]/20 bg-[#b8973a]/5">
             <p className="text-[9px] uppercase tracking-widest text-[#b8973a]/70 mb-1">Top pick</p>
             <p
               className="text-2xl font-light text-[#FAF6EE] print:text-black"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              {topPick.brand} {topPick.name}
+              {topModel!.brand} {topModel!.name}
             </p>
-            {topPick.variants.filter((v) => v.reaction === "love").length > 0 && (
-              <p className="text-xs text-zinc-500 mt-1">
-                ❤️ {topPick.variants.filter((v) => v.reaction === "love").map((v) => v.label).join(", ")}
+            {topPickVariant && (
+              <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1.5">
+                <Star size={10} className="text-[#b8973a] fill-[#b8973a]" />
+                {topPickVariant.label}
+                <span className="text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
+                  {topPickVariant.reference}
+                </span>
               </p>
             )}
           </div>
@@ -216,12 +226,15 @@ export function SummaryClient() {
           </div>
         )}
 
-        {/* QR code + footer */}
+        {/* Footer + QR */}
         {models.length > 0 && (
           <div className="mt-10 pt-6 border-t border-zinc-800 print:border-zinc-300 flex items-center justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-zinc-600">Jack&apos;s Watch Guide</p>
-              <p className="text-[10px] text-zinc-700 mt-0.5" style={{ fontFamily: "var(--font-mono)" }}>
+              <p
+                className="text-[10px] text-zinc-700 mt-0.5"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
                 alizainali.com/jackswatch
               </p>
             </div>
