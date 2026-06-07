@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import type { WatchModel, WatchVariant } from "@/types/watch";
 import { cn, getBrandGradient } from "@/lib/utils";
 
@@ -20,12 +20,11 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "inline-flex items-center gap-1 text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
+              "text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
               isPassed && "line-through"
             )}
           >
             {variant.reference}
-            <ExternalLink size={8} />
           </a>
         ) : (
           <span className={cn("text-zinc-400", isPassed && "line-through")}>
@@ -61,17 +60,15 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
 
   return (
     <div className="border-b border-[#b8973a]/10 bg-black">
-      <div className="flex flex-col sm:flex-row">
+      <div className="flex flex-col">
 
-        {/* ── Image ──────────────────────────────────────────────────────── */}
-        <div className="relative flex-shrink-0 self-stretch">
-          {/* Mobile: full-width banner, 180px tall */}
-          {/* Desktop: 96×128 portrait, left-anchored */}
+        {/* ── Image — full-width landscape banner on all screen sizes ──── */}
+        <div className="relative flex-shrink-0">
           <div
             className={cn(
               "overflow-hidden bg-gradient-to-b",
               gradient,
-              "h-[180px] w-full sm:h-full sm:w-24"
+              "h-[180px] sm:h-[220px] w-full"
             )}
           >
             {model.heroImage ? (
@@ -95,7 +92,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-4 py-3 flex flex-col gap-1.5">
+        <div className="flex-1 min-w-0 px-4 py-2 flex flex-col gap-1">
 
           {/* Header: brand + name + reorder widget + action buttons */}
           <div className="flex items-start justify-between gap-2">
@@ -107,7 +104,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
                 {model.brand}
               </p>
               <p
-                className="text-lg font-light text-[#FAF6EE] leading-tight"
+                className="text-base font-light text-[#FAF6EE] leading-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {model.name}
@@ -153,10 +150,10 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
           </div>
 
           {/* Separator */}
-          <div className="h-px bg-[#b8973a]/10 mt-0.5" />
+          <div className="h-px bg-[#b8973a]/10" />
 
           {/* Variant lines */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             {[...model.variants]
               .sort((a, b) => {
                 const order = (v: WatchVariant) => {

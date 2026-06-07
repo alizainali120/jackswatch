@@ -186,11 +186,7 @@ export function AppClient() {
     }).catch(console.error).finally(() => setSaving(false));
   }, []);
 
-  const handleUpdateImage = useCallback((modelId: string, url: string) => {
-    setModels((prev) => prev.map((m) => m.id !== modelId ? m : { ...m, heroImage: url }));
-  }, []);
-
-  const handleAddVariant = useCallback(async (modelId: string, reference: string, label: string, link?: string) => {
+const handleAddVariant = useCallback(async (modelId: string, reference: string, label: string, link?: string) => {
     const res = await fetch(`/api/watches/${modelId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -383,8 +379,10 @@ export function AppClient() {
       {/* Add watch modal */}
       {addingWatch && (
         <AddWatchModal
+          models={models}
           onClose={() => setAddingWatch(false)}
           onAdd={handleAddWatch}
+          onAddVariant={handleAddVariant}
         />
       )}
 
@@ -398,7 +396,6 @@ export function AppClient() {
           }
           onSetTopPick={(variantId) => handleSetTopPick(activeModel.id, variantId)}
           onUpdateNotes={(notes) => handleUpdateNotes(activeModel.id, notes)}
-          onUpdateImage={(url) => handleUpdateImage(activeModel.id, url)}
           onAddVariant={(ref, label, link) => handleAddVariant(activeModel.id, ref, label, link)}
         />
       )}

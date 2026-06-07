@@ -1,26 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { WatchModel } from "@/types/watch";
+
+type Mode = "new" | "variant";
 
 interface VariantDraft {
   reference: string;
   label: string;
-  link?: string;
 }
 
 interface AddWatchModalProps {
+  models: WatchModel[];
   onClose: () => void;
   onAdd: (brand: string, name: string, variants: VariantDraft[]) => Promise<void>;
+  onAddVariant: (modelId: string, reference: string, label: string) => Promise<void>;
 }
 
-const emptyVariant = (): VariantDraft => ({ reference: "", label: "", link: "" });
+const emptyVariant = (): VariantDraft => ({ reference: "", label: "" });
 
-export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
+export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatchModalProps) {
   const [visible, setVisible] = useState(false);
+  const [mode, setMode] = useState<Mode>("new");
   const [brand, setBrand] = useState("");
   const [name, setName] = useState("");
+  const [selectedModelId, setSelectedModelId] = useState("");
   const [variants, setVariants] = useState<VariantDraft[]>([emptyVariant()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +35,19 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
     const raf = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  function resetForm() {
+    setBrand("");
+    setName("");
+    setSelectedModelId("");
+    setVariants([emptyVariant()]);
+    setError(null);
+  }
+
+  function switchMode(m: Mode) {
+    setMode(m);
+    resetForm();
+  }
 
   function updateVariant(i: number, field: keyof VariantDraft, value: string) {
     setVariants((prev) => prev.map((v, idx) => idx === i ? { ...v, [field]: value } : v));
@@ -44,6 +63,26 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (mode === "variant") {
+      if (!selectedModelId) { setError("Select an existing watch."); return; }
+      const filled = variants.filter((v) => v.reference.trim());
+      if (filled.length === 0) { setError("At least one variant with a reference is required."); return; }
+      setError(null);
+      setSaving(true);
+      try {
+        for (const v of filled) {
+          await onAddVariant(selectedModelId, v.reference.trim(), v.label.trim());
+        }
+        onClose();
+      } catch {
+        setError("Failed to add variant.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     if (!brand.trim() || !name.trim()) { setError("Brand and name are required."); return; }
     const filled = variants.filter((v) => v.reference.trim());
     if (filled.length === 0) { setError("At least one variant with a reference is required."); return; }
@@ -53,14 +92,23 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
       await onAdd(brand.trim(), name.trim(), filled.map((v) => ({
         reference: v.reference.trim(),
         label: v.label.trim(),
-        link: v.link?.trim() || undefined,
       })));
     } finally {
       setSaving(false);
     }
   }
 
+  const sortedModels = [...models].sort((a, b) =>
+    `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`)
+  );
+
   const inputCls = "w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-sm text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors";
+  const tabCls = (active: boolean) => cn(
+    "flex-1 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors border-b-2",
+    active
+      ? "text-[#b8973a] border-[#b8973a]"
+      : "text-zinc-600 border-transparent hover:text-zinc-400"
+  );
 
   return (
     <>
@@ -89,42 +137,80 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
           </button>
         </div>
 
+        {/* Mode tabs */}
+        <div className="flex px-5 pt-3 gap-4" style={{ fontFamily: "var(--font-mono)" }}>
+          <button type="button" onClick={() => switchMode("new")} className={tabCls(mode === "new")}>
+            New Watch
+          </button>
+          <button type="button" onClick={() => switchMode("variant")} className={tabCls(mode === "variant")}>
+            Add Variant
+          </button>
+        </div>
+
         {/* Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
 
-          {/* Model */}
-          <section className="space-y-4">
-            <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
-              Model
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Brand</label>
-                <input
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  placeholder="Rolex"
-                  className={inputCls}
-                  style={{ fontFamily: "var(--font-sans)" }}
-                />
+          {mode === "new" && (
+            <section className="space-y-4">
+              <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
+                Model
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Brand</label>
+                  <input
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                    placeholder="Rolex"
+                    className={inputCls}
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Name</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Submariner"
+                    className={inputCls}
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Name</label>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Submariner"
-                  className={inputCls}
-                  style={{ fontFamily: "var(--font-sans)" }}
-                />
+            </section>
+          )}
+
+          {mode === "variant" && (
+            <section className="space-y-4">
+              <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
+                Select Watch
+              </p>
+              <div className="relative">
+                <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Watch</label>
+                <div className="relative">
+                  <select
+                    value={selectedModelId}
+                    onChange={(e) => setSelectedModelId(e.target.value)}
+                    className={cn(inputCls, "appearance-none cursor-pointer pr-5")}
+                    style={{ fontFamily: "var(--font-sans)" }}
+                  >
+                    <option value="" className="bg-black text-zinc-500">Select a watch…</option>
+                    {sortedModels.map((m) => (
+                      <option key={m.id} value={m.id} className="bg-black text-[#FAF6EE]">
+                        {m.brand} {m.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Variants */}
           <section className="space-y-4">
             <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
-              Variants
+              {mode === "variant" ? "New Variants" : "Variants"}
             </p>
             <div className="space-y-5">
               {variants.map((v, i) => (
@@ -159,16 +245,6 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
                         style={{ fontFamily: "var(--font-sans)" }}
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Link (optional)</label>
-                    <input
-                      value={v.link}
-                      onChange={(e) => updateVariant(i, "link", e.target.value)}
-                      placeholder="https://..."
-                      className={inputCls}
-                      style={{ fontFamily: "var(--font-sans)" }}
-                    />
                   </div>
                 </div>
               ))}
@@ -205,7 +281,7 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
             className="bg-[#F5E6C8] text-black px-6 py-2 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors disabled:opacity-50"
             style={{ fontFamily: "var(--font-sans)" }}
           >
-            {saving ? "Adding…" : "Add Watch"}
+            {saving ? "Adding…" : mode === "variant" ? "Add Variant" : "Add Watch"}
           </button>
         </div>
       </div>

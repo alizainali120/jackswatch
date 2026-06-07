@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { X, ExternalLink, Star, Upload, Loader2, Plus } from "lucide-react";
-import { compressImage } from "@/lib/storage";
+import { useState, useEffect } from "react";
+import { X, Star, Loader2, Plus } from "lucide-react";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 import { cn } from "@/lib/utils";
 
@@ -37,12 +36,11 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "inline-flex items-center gap-1 text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
+              "text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
               isPassed && "line-through"
             )}
           >
             {variant.reference}
-            <ExternalLink size={8} />
           </a>
         ) : (
           <span className={cn("text-zinc-400", isPassed && "line-through")}>
@@ -109,7 +107,6 @@ interface RatingModalProps {
   onUpdateVariant: (variantId: string, reaction: Reaction | null) => void;
   onSetTopPick: (variantId: string | null) => void;
   onUpdateNotes: (notes: string) => void;
-  onUpdateImage: (url: string) => void;
   onAddVariant: (reference: string, label: string, link?: string) => Promise<void>;
 }
 
@@ -119,39 +116,15 @@ export function RatingModal({
   onUpdateVariant,
   onSetTopPick,
   onUpdateNotes,
-  onUpdateImage,
   onAddVariant,
 }: RatingModalProps) {
   const [visible, setVisible] = useState(false);
   const [localNotes, setLocalNotes] = useState(model.notes);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const [addingVariant, setAddingVariant] = useState(false);
   const [newRef, setNewRef] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newLink, setNewLink] = useState("");
   const [savingVariant, setSavingVariant] = useState(false);
-
-  async function handleImageUpload(file: File) {
-    setUploadError(null);
-    setUploading(true);
-    try {
-      const compressed = await compressImage(file);
-      const res = await fetch(`/api/watches/${model.id}/photo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: compressed }),
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const { url } = await res.json();
-      onUpdateImage(url);
-    } catch {
-      setUploadError("Upload failed. Try again.");
-    } finally {
-      setUploading(false);
-    }
-  }
 
   useEffect(() => {
     setLocalNotes(model.notes);
@@ -309,43 +282,6 @@ export function RatingModal({
                 <Plus size={11} />
                 Add variant
               </button>
-            )}
-          </section>
-
-          {/* PHOTO */}
-          <section>
-            <p
-              className="text-[9px] uppercase tracking-[0.25em] text-[#b8973a] mb-3 pb-2 border-b border-[#b8973a]/20"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Photo
-            </p>
-            <button
-              type="button"
-              onClick={() => imageInputRef.current?.click()}
-              disabled={uploading}
-              className="w-full h-20 border border-dashed border-zinc-800 hover:border-zinc-600 transition-colors flex flex-col items-center justify-center gap-1.5 relative overflow-hidden disabled:opacity-50"
-            >
-              {model.heroImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={model.heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-              ) : null}
-              <div className="relative z-10 flex flex-col items-center gap-1">
-                {uploading ? <Loader2 size={14} className="animate-spin text-zinc-500" /> : <Upload size={14} className="text-zinc-600" />}
-                <span className="text-[9px] text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
-                  {model.heroImage ? "Replace" : "Upload"}
-                </span>
-              </div>
-            </button>
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = ""; }}
-            />
-            {uploadError && (
-              <p className="text-[10px] text-red-400 mt-2" style={{ fontFamily: "var(--font-mono)" }}>{uploadError}</p>
             )}
           </section>
 
