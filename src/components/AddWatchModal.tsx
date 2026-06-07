@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface VariantDraft {
   reference: string;
   label: string;
-  link: string;
+  link?: string;
 }
 
 interface AddWatchModalProps {
@@ -53,7 +53,7 @@ export function AddWatchModal({ onClose, onAdd }: AddWatchModalProps) {
       await onAdd(brand.trim(), name.trim(), filled.map((v) => ({
         reference: v.reference.trim(),
         label: v.label.trim(),
-        link: v.link.trim() || undefined,
+        link: v.link?.trim() || undefined,
       })));
     } finally {
       setSaving(false);
