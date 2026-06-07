@@ -157,9 +157,19 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
 
           {/* Variant lines */}
           <div className="space-y-2">
-            {model.variants.map((v) => (
-              <VariantLine key={v.id} variant={v} isTopPick={model.topPickVariantId === v.id} />
-            ))}
+            {[...model.variants]
+              .sort((a, b) => {
+                const order = (v: WatchVariant) => {
+                  if (v.id === model.topPickVariantId) return 0;
+                  if (v.reaction === "preferred") return 1;
+                  if (v.reaction === null) return 2;
+                  return 3;
+                };
+                return order(a) - order(b);
+              })
+              .map((v) => (
+                <VariantLine key={v.id} variant={v} isTopPick={model.topPickVariantId === v.id} />
+              ))}
           </div>
 
           {/* Footer: notes snippet */}

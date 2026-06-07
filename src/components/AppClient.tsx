@@ -74,8 +74,6 @@ export function AppClient() {
       if (b.rank !== null) return 1;
       return 0;
     });
-  const topPick = preferredModels.filter((m) => m.topPickVariantId !== null);
-  const preferred = preferredModels.filter((m) => m.topPickVariantId === null);
   const passed = models.filter(
     (m) =>
       m.variants.length > 0 &&
@@ -242,10 +240,8 @@ export function AppClient() {
     <div className="min-h-screen bg-black text-[#FAF6EE]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-black/95 backdrop-blur-sm border-b border-zinc-800/50">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3 relative">
-          <div className="w-16" />
-
-          <div className="flex items-center gap-2.5 absolute left-1/2 -translate-x-1/2">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center flex-shrink-0">
               <WatchIcon size={11} className="text-[#b8973a]" />
             </div>
@@ -298,56 +294,32 @@ export function AppClient() {
 
       <main className="max-w-2xl mx-auto pb-16">
 
-        {/* TOP PICK section */}
-        {topPick.length > 0 && (
-          <section className="mb-8">
-            <div className="px-4 pb-3 border-b border-[#b8973a]/20">
-              <span
-                className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                Top Pick
-              </span>
-            </div>
-            {topPick.map((model, i) => (
-              <WatchRow
-                key={model.id}
-                model={model}
-                rank={i + 1}
-                onRate={() => setActiveModelId(model.id)}
-                onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                onMoveDown={i < topPick.length - 1 ? () => handleMoveDown(model.id) : undefined}
-              />
-            ))}
-          </section>
-        )}
-
-        {/* PREFERRED section */}
+        {/* RANKED section */}
         <section className="mb-8">
           <div className="px-4 pb-3 border-b border-[#b8973a]/20">
             <span
               className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              Preferred
+              Ranked
             </span>
           </div>
 
-          {preferred.length === 0 && topPick.length === 0 ? (
+          {preferredModels.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <p className="text-xs text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
                 Mark a variant Preferred to move a watch here.
               </p>
             </div>
-          ) : preferred.length === 0 ? null : (
-            preferred.map((model, i) => (
+          ) : (
+            preferredModels.map((model, i) => (
               <WatchRow
                 key={model.id}
                 model={model}
-                rank={topPick.length + i + 1}
+                rank={i + 1}
                 onRate={() => setActiveModelId(model.id)}
                 onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                onMoveDown={i < preferred.length - 1 ? () => handleMoveDown(model.id) : undefined}
+                onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
               />
             ))
           )}
