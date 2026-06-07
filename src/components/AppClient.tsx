@@ -129,16 +129,27 @@ export function AppClient() {
 
   const handleUpdateVariant = useCallback((modelId: string, variantId: string, reaction: Reaction | null) => {
     setModels((prev) => {
-      const updatedModels = prev.map((m) =>
-        m.id !== modelId ? m : {
-          ...m,
-          variants: m.variants.map((v) => v.id === variantId ? { ...v, reaction } : v),
-          topPickVariantId:
-            reaction !== "preferred" && m.topPickVariantId === variantId
-              ? null
-              : m.topPickVariantId,
+      const updatedModels = prev.map((m) => {
+        if (m.id !== modelId) return m;
+        const updatedVariants = m.variants.map((v) => v.id === variantId ? { ...v, reaction } : v);
+        const preferredCount = updatedVariants.filter((v) => v.reaction === "preferred").length;
+        const shouldClearTopPick = m.topPickVariantId !== null && (
+          (reaction !== "preferred" && m.topPickVariantId === variantId) ||
+          preferredCount <= 1
+        );
+        if (shouldClearTopPick) {
+          fetch(`/api/watches/${modelId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topPickVariantId: null }),
+          }).catch(console.error);
         }
-      );
+        return {
+          ...m,
+          variants: updatedVariants,
+          topPickVariantId: shouldClearTopPick ? null : m.topPickVariantId,
+        };
+      });
 
       if (reaction === "preferred") {
         const model = updatedModels.find((m) => m.id === modelId);

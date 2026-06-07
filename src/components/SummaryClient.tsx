@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { WatchModel } from "@/types/watch";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Printer, Loader2 } from "lucide-react";
+import { ArrowLeft, Printer, Loader2, Watch as WatchIcon } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -35,18 +35,18 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="mb-2">
-            <span
-              className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 print:text-zinc-500 mr-2"
+            <p
+              className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 print:text-zinc-500 font-medium"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               {model.brand}
-            </span>
-            <span
-              className="text-[17px] font-light text-[#FAF6EE] print:text-black print:font-normal"
+            </p>
+            <p
+              className="text-lg font-light text-[#FAF6EE] print:text-black print:font-normal leading-tight"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {model.name}
-            </span>
+            </p>
           </div>
 
           {preferred.length > 0 && (
@@ -113,30 +113,42 @@ export function SummaryClient() {
   return (
     <div className="min-h-screen bg-black text-[#FAF6EE] print:bg-white print:text-black">
       <div className="max-w-xl mx-auto px-4 py-8">
-        {/* Nav */}
-        <div className="flex items-center justify-between mb-8 print:hidden">
-          <Link href="/" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-            <ArrowLeft size={13} />
-            Collection
-          </Link>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-[#b8973a] transition-colors"
-          >
-            <Printer size={13} />
-            Print
-          </button>
-        </div>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50 print:border-zinc-300">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center flex-shrink-0 print:border-zinc-400">
+              <WatchIcon size={11} className="text-[#b8973a] print:text-black" />
+            </div>
+            <div>
+              <span
+                className="text-xs font-semibold tracking-widest uppercase text-zinc-100 print:text-black block"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Jack&apos;s Watch Guide
+              </span>
+              <span
+                className="text-[9px] tracking-[0.2em] uppercase text-zinc-500 print:text-zinc-500"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Preferred Picks
+              </span>
+            </div>
+          </div>
 
-        <h1
-          className="text-4xl font-light tracking-[0.2em] uppercase text-[#FAF6EE] print:text-black mb-1"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          Jack&apos;s Watch Preferences
-        </h1>
-        <p className="text-[10px] tracking-widest text-zinc-600 print:text-zinc-500 uppercase mb-4">
-          {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-        </p>
+          <div className="flex items-center gap-3 print:hidden">
+            <Link href="/" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+              <ArrowLeft size={13} />
+              Collection
+            </Link>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-[#b8973a] transition-colors"
+            >
+              <Printer size={13} />
+              Print
+            </button>
+          </div>
+        </div>
 
         {models.length === 0 ? (
           <div className="text-center py-16">
