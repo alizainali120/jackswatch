@@ -19,9 +19,9 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
   return (
     <div className="py-5 border-b border-zinc-800/40 print:border-zinc-300 last:border-0 print:py-4">
       <div className="flex items-baseline gap-3">
-        <div className="flex flex-col items-center flex-shrink-0 w-5">
+        <div className="flex flex-col items-center flex-shrink-0 w-6">
           <span
-            className="text-[10px] text-zinc-600 print:text-zinc-500 tabular-nums leading-none"
+            className="text-[11px] text-zinc-500 print:text-zinc-500 tabular-nums leading-none"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             {rank}
@@ -36,7 +36,7 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
         <div className="flex-1 min-w-0">
           <div className="mb-2">
             <p
-              className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 print:text-zinc-500 font-medium"
+              className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 print:text-zinc-500 font-medium"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               {model.brand}
@@ -127,7 +127,7 @@ export function SummaryClient() {
                 Jack&apos;s Watch Guide
               </span>
               <span
-                className="text-[9px] tracking-[0.2em] uppercase text-zinc-500 print:text-zinc-500"
+                className="text-[10px] tracking-[0.2em] uppercase text-zinc-500 print:text-zinc-500"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 Preferred Picks
@@ -169,9 +169,9 @@ export function SummaryClient() {
         {models.length > 0 && (
           <div className="mt-10 pt-6 border-t border-zinc-800 flex items-center justify-between print:hidden">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600">Jack&apos;s Watch Guide</p>
+              <p className="text-[11px] uppercase tracking-widest text-zinc-500">Jack&apos;s Watch Guide</p>
               <p
-                className="text-[10px] text-zinc-700 mt-0.5"
+                className="text-[11px] text-zinc-600 mt-0.5"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 alizainali.com/jackswatch

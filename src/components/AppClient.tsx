@@ -14,11 +14,11 @@ function OnboardingCard() {
   const [dismissed, setDismissed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setDismissed(localStorage.getItem(ONBOARDING_KEY) === "true");
+    setDismissed(sessionStorage.getItem(ONBOARDING_KEY) === "true");
   }, []);
 
   function handleDismiss() {
-    localStorage.setItem(ONBOARDING_KEY, "true");
+    sessionStorage.setItem(ONBOARDING_KEY, "true");
     setDismissed(true);
   }
 
@@ -28,27 +28,27 @@ function OnboardingCard() {
     <div className="max-w-2xl mx-auto px-4 mb-6">
       <div className="border border-zinc-800 bg-zinc-950 rounded-sm px-5 py-5">
         <p
-          className="text-[10px] uppercase tracking-[0.3em] text-[#b8973a] mb-3"
+          className="text-[11px] uppercase tracking-[0.3em] text-[#b8973a] mb-3"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           Jack&apos;s Watch Picks
         </p>
 
         <div className="space-y-3 mb-5">
-          <p className="text-[12px] text-zinc-300 leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
+          <p className="text-[13px] text-zinc-300 leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
             Rate each watch based purely on what you like - the color, dial, brand, or just what feels right. Ignore price entirely; this is a style guide, not a shopping list. I may end up getting a used piece or a similar style from a different brand.
           </p>
           <ul className="space-y-2">
-            <li className="text-[11px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
-              <span className="text-zinc-600 mr-1.5">01</span>
+            <li className="text-[12px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="text-zinc-500 mr-1.5">01</span>
               Mark each variant <span className="text-emerald-400">Preferred</span> or <span className="text-zinc-400">Pass</span>. Any watch with a Preferred variant moves into your Ranked list.
             </li>
-            <li className="text-[11px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
-              <span className="text-zinc-600 mr-1.5">02</span>
+            <li className="text-[12px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="text-zinc-500 mr-1.5">02</span>
               In Ranked, drag watches into order from most to least favorite. If you marked more than one variant Preferred, pin your single top pick.
             </li>
-            <li className="text-[11px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
-              <span className="text-zinc-600 mr-1.5">03</span>
+            <li className="text-[12px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="text-zinc-500 mr-1.5">03</span>
               Add notes whenever something stands out — love the dial, hate the bracelet, size feels off. The more detail, the better I can match your style.
             </li>
           </ul>
@@ -56,7 +56,7 @@ function OnboardingCard() {
 
         <button
           onClick={handleDismiss}
-          className="border border-[#b8973a] text-[#b8973a] text-[10px] tracking-widest uppercase px-4 py-1.5 hover:bg-[#b8973a]/10 transition-colors"
+          className="border border-[#b8973a] text-[#b8973a] text-[11px] tracking-widest uppercase px-4 py-2 hover:bg-[#b8973a]/10 transition-colors"
           style={{ fontFamily: "var(--font-sans)" }}
         >
           Got it
@@ -280,7 +280,7 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
 
           <div className="flex items-center gap-3">
             {saving && (
-              <span className="flex items-center gap-1 text-[10px] text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="flex items-center gap-1.5 text-[10px] text-zinc-500" style={{ fontFamily: "var(--font-mono)" }}>
                 <Loader2 size={10} className="animate-spin" />
                 Saving
               </span>
@@ -294,10 +294,10 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
             </button>
             <Link
               href="/summary"
-              className="border border-[#b8973a]/40 text-[#b8973a] text-[10px] tracking-widest uppercase px-3 py-1.5 hover:bg-[#b8973a]/10 transition-colors"
+              className="border border-[#b8973a]/40 text-[#b8973a] text-[11px] tracking-widest uppercase px-3 py-1.5 hover:bg-[#b8973a]/10 transition-colors"
               style={{ fontFamily: "var(--font-sans)" }}
             >
-              Summary →
+              Summary
             </Link>
           </div>
         </div>
@@ -321,32 +321,43 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
 
         {/* RANKED section */}
         <section className="mb-8">
-          <div className="px-4 pb-3 border-b border-[#b8973a]/20">
+          <div className="px-4 pb-3 border-b border-[#b8973a]/20 flex items-baseline justify-between">
             <span
-              className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
+              className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               Ranked
             </span>
+            {preferredModels.length > 0 && (
+              <span
+                className="text-[10px] text-zinc-500"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                #1 = favorite
+              </span>
+            )}
           </div>
 
           {preferredModels.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <p className="text-xs text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
+              <p className="text-xs text-zinc-500" style={{ fontFamily: "var(--font-mono)" }}>
                 Mark a variant Preferred to move a watch here.
               </p>
             </div>
           ) : (
-            preferredModels.map((model, i) => (
-              <WatchRow
-                key={model.id}
-                model={model}
-                rank={i + 1}
-                onRate={() => setActiveModelId(model.id)}
-                onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
-              />
-            ))
+            <div className="divide-y divide-zinc-800">
+              {preferredModels.map((model, i) => (
+                <div key={model.id} className="pt-8 first:pt-0">
+                  <WatchRow
+                    model={model}
+                    rank={i + 1}
+                    onRate={() => setActiveModelId(model.id)}
+                    onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
+                    onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
@@ -355,20 +366,23 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
           <section className="mb-8">
             <div className="px-4 pb-3 border-b border-[#b8973a]/20">
               <span
-                className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
+                className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 Unranked
               </span>
             </div>
-            {unranked.map((model) => (
-              <WatchRow
-                key={model.id}
-                model={model}
-                rank={null}
-                onRate={() => setActiveModelId(model.id)}
-              />
-            ))}
+            <div className="divide-y divide-zinc-800">
+              {unranked.map((model) => (
+                <div key={model.id} className="pt-8 first:pt-0">
+                  <WatchRow
+                    model={model}
+                    rank={null}
+                    onRate={() => setActiveModelId(model.id)}
+                  />
+                </div>
+              ))}
+            </div>
           </section>
         )}
 
@@ -377,20 +391,23 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
           <section>
             <div className="px-4 pb-3 border-b border-[#b8973a]/20">
               <span
-                className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
+                className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 Passed
               </span>
             </div>
-            {passed.map((model) => (
-              <WatchRow
-                key={model.id}
-                model={model}
-                rank={null}
-                onRate={() => setActiveModelId(model.id)}
-              />
-            ))}
+            <div className="divide-y divide-zinc-800">
+              {passed.map((model) => (
+                <div key={model.id} className="pt-8 first:pt-0">
+                  <WatchRow
+                    model={model}
+                    rank={null}
+                    onRate={() => setActiveModelId(model.id)}
+                  />
+                </div>
+              ))}
+            </div>
           </section>
         )}
       </main>

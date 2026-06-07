@@ -102,9 +102,9 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
     `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`)
   );
 
-  const inputCls = "w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-sm text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors";
+  const inputCls = "w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-sm text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors";
   const tabCls = (active: boolean) => cn(
-    "flex-1 py-2 text-[10px] uppercase tracking-[0.2em] transition-colors border-b-2",
+    "flex-1 py-2.5 text-[11px] uppercase tracking-[0.2em] transition-colors border-b-2",
     active
       ? "text-[#b8973a] border-[#b8973a]"
       : "text-zinc-600 border-transparent hover:text-zinc-400"
@@ -129,7 +129,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#b8973a]/15 flex-shrink-0">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#b8973a]" style={{ fontFamily: "var(--font-mono)" }}>
+          <p className="text-sm uppercase tracking-[0.25em] text-[#b8973a]" style={{ fontFamily: "var(--font-mono)" }}>
             Add Watch
           </p>
           <button onClick={onClose} className="text-zinc-600 hover:text-zinc-300 transition-colors">
@@ -152,12 +152,12 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
 
           {mode === "new" && (
             <section className="space-y-4">
-              <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400 pb-2 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
                 Model
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Brand</label>
+                  <label className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1.5 block" style={{ fontFamily: "var(--font-mono)" }}>Brand</label>
                   <input
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
@@ -167,7 +167,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Name</label>
+                  <label className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1.5 block" style={{ fontFamily: "var(--font-mono)" }}>Name</label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -182,11 +182,11 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
 
           {mode === "variant" && (
             <section className="space-y-4">
-              <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400 pb-2 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
                 Select Watch
               </p>
               <div className="relative">
-                <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Watch</label>
+                <label className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1.5 block" style={{ fontFamily: "var(--font-mono)" }}>Watch</label>
                 <div className="relative">
                   <select
                     value={selectedModelId}
@@ -201,7 +201,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
                       </option>
                     ))}
                   </select>
-                  <ChevronDown size={12} className="absolute right-0 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+                  <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
                 </div>
               </div>
             </section>
@@ -209,14 +209,14 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
 
           {/* Variants */}
           <section className="space-y-4">
-            <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 pb-1 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400 pb-2 border-b border-zinc-800" style={{ fontFamily: "var(--font-mono)" }}>
               {mode === "variant" ? "New Variants" : "Variants"}
             </p>
             <div className="space-y-5">
               {variants.map((v, i) => (
                 <div key={i} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] text-zinc-700 uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
                       Variant {i + 1}
                     </span>
                     {variants.length > 1 && (
@@ -227,7 +227,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Reference</label>
+                      <label className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1.5 block" style={{ fontFamily: "var(--font-mono)" }}>Reference</label>
                       <input
                         value={v.reference}
                         onChange={(e) => updateVariant(i, "reference", e.target.value)}
@@ -236,7 +236,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
                       />
                     </div>
                     <div>
-                      <label className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1 block" style={{ fontFamily: "var(--font-mono)" }}>Label</label>
+                      <label className="text-[10px] uppercase tracking-widest text-zinc-400 mb-1.5 block" style={{ fontFamily: "var(--font-mono)" }}>Label</label>
                       <input
                         value={v.label}
                         onChange={(e) => updateVariant(i, "label", e.target.value)}
@@ -252,7 +252,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
             <button
               type="button"
               onClick={addVariant}
-              className="flex items-center gap-1.5 text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors"
+              className="flex items-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               <Plus size={12} />
@@ -261,7 +261,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
           </section>
 
           {error && (
-            <p className="text-[10px] text-red-400" style={{ fontFamily: "var(--font-mono)" }}>{error}</p>
+            <p className="text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2" style={{ fontFamily: "var(--font-mono)" }}>{error}</p>
           )}
         </form>
 
@@ -270,7 +270,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
           <button
             type="button"
             onClick={onClose}
-            className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors uppercase tracking-widest"
+            className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-widest"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             Cancel
@@ -278,7 +278,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="bg-[#F5E6C8] text-black px-6 py-2 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors disabled:opacity-50"
+            className="bg-[#F5E6C8] text-black px-6 py-2.5 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors disabled:opacity-50"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             {saving ? "Adding…" : mode === "variant" ? "Add Variant" : "Add Watch"}

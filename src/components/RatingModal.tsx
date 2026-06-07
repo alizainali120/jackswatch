@@ -29,7 +29,7 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
       )}
     >
       {/* Single line: ref (linked) · specs */}
-      <p className="text-[10px] mb-3" style={{ fontFamily: "var(--font-mono)" }}>
+      <p className="text-[11px] mb-3" style={{ fontFamily: "var(--font-mono)" }}>
         {variant.link ? (
           <a
             href={variant.link}
@@ -47,7 +47,7 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
             {variant.reference}
           </span>
         )}
-        {specs && <span className="text-zinc-600"> · {specs}</span>}
+        {specs && <span className="text-zinc-500"> · {specs}</span>}
         {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
       </p>
 
@@ -56,10 +56,10 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
         <button
           onClick={() => onReact(isPreferred ? null : "preferred")}
           className={cn(
-            "px-3 py-1.5 border text-[10px] font-medium tracking-wide transition-all",
+            "px-3.5 py-2 border text-[11px] font-medium tracking-wide transition-all",
             isPreferred
               ? "bg-[#F5E6C8] border-[#F5E6C8] text-black"
-              : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"
+              : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
           )}
           style={{ fontFamily: "var(--font-sans)" }}
         >
@@ -68,10 +68,10 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
         <button
           onClick={() => onReact(isPassed ? null : "pass")}
           className={cn(
-            "px-3 py-1.5 border text-[10px] font-medium tracking-wide transition-all",
+            "px-3.5 py-2 border text-[11px] font-medium tracking-wide transition-all",
             isPassed
-              ? "border-[#444444] text-[#444444]"
-              : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"
+              ? "border-zinc-600 text-zinc-500 bg-zinc-900/50"
+              : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
           )}
           style={{ fontFamily: "var(--font-sans)" }}
         >
@@ -82,7 +82,7 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
           <button
             onClick={onSetTopPick}
             className={cn(
-              "flex items-center gap-1 px-2.5 py-1.5 border text-[10px] transition-all ml-auto",
+              "flex items-center gap-1 px-3 py-2 border text-[11px] transition-all ml-auto",
               isTopPick
                 ? "bg-[#b8973a]/15 border-[#b8973a]/50 text-[#b8973a]"
                 : "border-zinc-800 text-zinc-600 hover:border-[#b8973a]/30 hover:text-[#b8973a]/60"
@@ -179,7 +179,7 @@ export function RatingModal({
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-[#b8973a]/15 flex-shrink-0">
           <div>
             <p
-              className="text-[9px] uppercase tracking-[0.2em] text-zinc-500"
+              className="text-[10px] uppercase tracking-[0.2em] text-zinc-400"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               {model.brand}
@@ -205,7 +205,7 @@ export function RatingModal({
           {/* VARIANTS */}
           <section>
             <p
-              className="text-[9px] uppercase tracking-[0.25em] text-[#b8973a] mb-2 pb-2 border-b border-[#b8973a]/20"
+              className="text-[10px] uppercase tracking-[0.25em] text-[#b8973a] mb-3 pb-2 border-b border-[#b8973a]/20"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               Variants
@@ -232,41 +232,41 @@ export function RatingModal({
 
             {/* Inline add-variant form */}
             {addingVariant ? (
-              <div className="pt-3 space-y-2.5 border-t border-zinc-900">
+              <div className="pt-4 space-y-3 border-t border-zinc-800">
                 <input
                   autoFocus
                   value={newRef}
                   onChange={(e) => setNewRef(e.target.value)}
                   placeholder="Reference (e.g. 124060)"
-                  className="w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-[11px] text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
                   style={{ fontFamily: "var(--font-mono)" }}
                 />
                 <input
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Label (e.g. 41mm · Black · Bracelet)"
-                  className="w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-[11px] text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
                   style={{ fontFamily: "var(--font-sans)" }}
                 />
                 <input
                   value={newLink}
                   onChange={(e) => setNewLink(e.target.value)}
                   placeholder="Link (optional)"
-                  className="w-full bg-transparent border-b border-zinc-800 focus:border-[#b8973a]/50 px-0 py-1.5 text-[11px] text-[#FAF6EE] placeholder-zinc-700 focus:outline-none transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
                   style={{ fontFamily: "var(--font-sans)" }}
                 />
                 <div className="flex items-center gap-3 pt-1">
                   <button
                     onClick={handleSaveVariant}
                     disabled={!newRef.trim() || savingVariant}
-                    className="text-[10px] tracking-widest uppercase px-3 py-1.5 bg-[#F5E6C8] text-black hover:bg-[#FAF6EE] transition-colors disabled:opacity-40"
+                    className="text-[11px] tracking-widest uppercase px-4 py-2 bg-[#F5E6C8] text-black hover:bg-[#FAF6EE] transition-colors disabled:opacity-40"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     {savingVariant ? "Saving…" : "Save"}
                   </button>
                   <button
                     onClick={() => { setAddingVariant(false); setNewRef(""); setNewLabel(""); setNewLink(""); }}
-                    className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors uppercase tracking-widest"
+                    className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-widest"
                     style={{ fontFamily: "var(--font-sans)" }}
                   >
                     Cancel
@@ -276,7 +276,7 @@ export function RatingModal({
             ) : (
               <button
                 onClick={() => setAddingVariant(true)}
-                className="flex items-center gap-1.5 mt-3 text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors"
+                className="flex items-center gap-1.5 mt-3 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 <Plus size={11} />
@@ -288,7 +288,7 @@ export function RatingModal({
           {/* NOTES */}
           <section>
             <p
-              className="text-[9px] uppercase tracking-[0.25em] text-[#b8973a] mb-3 pb-2 border-b border-[#b8973a]/20"
+              className="text-[10px] uppercase tracking-[0.25em] text-[#b8973a] mb-3 pb-2 border-b border-[#b8973a]/20"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               Notes
@@ -299,7 +299,7 @@ export function RatingModal({
               onBlur={handleNotesBlur}
               placeholder="Add context, heritage, or your thoughts..."
               rows={4}
-              className="w-full bg-transparent border-0 border-b border-[#b8973a]/20 px-0 py-1.5 text-sm text-[#FAF6EE] placeholder-zinc-700 focus:outline-none focus:border-[#b8973a]/50 transition-colors leading-relaxed resize-none"
+              className="w-full bg-zinc-950 border border-zinc-800 px-3 py-2.5 text-sm text-[#FAF6EE] placeholder-zinc-600 focus:outline-none focus:border-[#b8973a]/50 transition-colors leading-relaxed resize-none"
               style={{ fontFamily: "var(--font-sans)" }}
             />
           </section>
@@ -309,7 +309,7 @@ export function RatingModal({
         <div className="flex items-center justify-end px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0">
           <button
             onClick={onClose}
-            className="bg-[#F5E6C8] text-black px-6 py-2 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors"
+            className="bg-[#F5E6C8] text-black px-6 py-2.5 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors"
             style={{ fontFamily: "var(--font-sans)" }}
           >
             Done

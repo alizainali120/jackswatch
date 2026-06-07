@@ -12,7 +12,7 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
   return (
     <div className={cn("transition-opacity", isPassed && "opacity-35")}>
       {/* Single line: ref (linked) · specs */}
-      <p className="text-[10px]" style={{ fontFamily: "var(--font-mono)" }}>
+      <p className="text-[11px] leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
         {variant.link ? (
           <a
             href={variant.link}
@@ -31,11 +31,11 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
             {variant.reference}
           </span>
         )}
-        {specs && <span className="text-zinc-600"> · {specs}</span>}
+        {specs && <span className="text-zinc-500"> · {specs}</span>}
         {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
         {isTopPick && (
           <span
-            className="inline-block ml-1.5 px-1 py-px text-[8px] uppercase tracking-widest border border-[#b8973a]/60 text-[#b8973a] align-middle leading-none"
+            className="inline-block ml-1.5 px-1.5 py-0.5 text-[9px] uppercase tracking-widest border border-[#b8973a]/60 text-[#b8973a] align-middle leading-none"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             Top Pick
@@ -59,7 +59,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
   const gradient = getBrandGradient(model.brand);
 
   return (
-    <div className="border-b border-[#b8973a]/10 bg-black">
+    <div className="bg-black">
       <div className="flex flex-col">
 
         {/* ── Image — full-width landscape banner on all screen sizes ──── */}
@@ -92,19 +92,19 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-4 py-2 flex flex-col gap-1">
+        <div className="flex-1 min-w-0 px-4 py-3 pb-4 flex flex-col gap-1.5">
 
           {/* Header: brand + name + reorder widget + action buttons */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p
-                className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 font-medium"
+                className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 {model.brand}
               </p>
               <p
-                className="text-base font-light text-[#FAF6EE] leading-tight"
+                className="text-lg font-light text-[#FAF6EE] leading-tight"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 {model.name}
@@ -119,12 +119,12 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
                     onClick={onMoveUp}
                     disabled={!onMoveUp}
                     title="Move up"
-                    className="px-2.5 py-1 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                    className="px-2.5 py-1.5 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all disabled:opacity-30"
                   >
                     <ChevronUp size={11} strokeWidth={1.5} />
                   </button>
                   <span
-                    className="text-[10px] text-zinc-500 tabular-nums border-t border-b border-zinc-800 px-2 py-0.5 w-full text-center"
+                    className="text-[11px] text-zinc-400 tabular-nums border-t border-b border-zinc-800 px-2.5 py-0.5 w-full text-center"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {rank}
@@ -133,7 +133,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
                     onClick={onMoveDown}
                     disabled={!onMoveDown}
                     title="Move down"
-                    className="px-2.5 py-1 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                    className="px-2.5 py-1.5 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all disabled:opacity-30"
                   >
                     <ChevronDown size={11} strokeWidth={1.5} />
                   </button>
@@ -141,7 +141,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
               )}
               <button
                 onClick={onRate}
-                className="border border-[#b8973a] text-[#b8973a] px-2.5 py-1.5 text-[10px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors cursor-pointer"
+                className="border border-[#b8973a] text-[#b8973a] px-3 py-1.5 text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
                 Rate →
@@ -153,7 +153,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
           <div className="h-px bg-[#b8973a]/10" />
 
           {/* Variant lines */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {[...model.variants]
               .sort((a, b) => {
                 const order = (v: WatchVariant) => {
@@ -173,7 +173,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
           {model.notes && (
             <>
               <div className="h-px bg-[#b8973a]/10" />
-              <p className="text-[11px] text-[#FAF6EE]/45 italic leading-snug">
+              <p className="text-[11px] text-[#FAF6EE]/50 italic leading-relaxed">
                 {model.notes}
               </p>
             </>
