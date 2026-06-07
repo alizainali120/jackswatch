@@ -48,12 +48,12 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
                       className={cn(
                         "text-[11px] leading-relaxed",
                         isTopPick
-                          ? "text-[#b8973a] print:text-black font-medium"
+                          ? "text-[#b8973a] print:text-black"
                           : "text-zinc-400 print:text-zinc-700"
                       )}
                       style={{ fontFamily: "var(--font-mono)" }}
                     >
-                      {v.reference}{isTopPick && " [top pick]"}
+                      {v.reference}
                     </span>
                     {v.label && (
                       <span
@@ -61,6 +61,14 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
                         style={{ fontFamily: "var(--font-mono)" }}
                       >
                         · {v.label}
+                      </span>
+                    )}
+                    {isTopPick && (
+                      <span
+                        className="text-[11px] text-[#b8973a] print:text-zinc-500 leading-relaxed"
+                        style={{ fontFamily: "var(--font-mono)" }}
+                      >
+                        [top pick]
                       </span>
                     )}
                   </div>
