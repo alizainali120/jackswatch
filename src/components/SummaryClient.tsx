@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import type { WatchModel } from "@/types/watch";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Printer, Loader2, Watch as WatchIcon } from "lucide-react";
+import { Printer, Loader2, Watch as WatchIcon } from "lucide-react";
 import Link from "next/link";
-import { QRCodeSVG } from "qrcode.react";
 
 function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
   const preferred = model.variants
@@ -17,7 +16,7 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
     });
 
   return (
-    <div className="py-5 border-b border-zinc-800/40 print:border-zinc-300 last:border-0 print:py-4">
+    <div className="py-3 border-b border-zinc-800/40 print:border-zinc-300 last:border-0 print:py-2">
       <div className="flex items-baseline gap-3">
         <div className="flex flex-col items-center flex-shrink-0 w-6">
           <span
@@ -26,31 +25,21 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
           >
             {rank}
           </span>
-          <span
-            className="hidden print:block text-[7px] uppercase tracking-widest text-zinc-400 leading-none mt-0.5"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            rank
-          </span>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="mb-2">
+          <div className="mb-1.5">
             <p
-              className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 print:text-zinc-500 font-medium"
+              className="text-[11px] text-[#FAF6EE] print:text-black leading-tight"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              {model.brand}
-            </p>
-            <p
-              className="text-lg font-light text-[#FAF6EE] print:text-black print:font-normal leading-tight"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
+              <span className="text-zinc-400 print:text-zinc-500">{model.brand}</span>
+              <span className="text-zinc-600 print:text-zinc-400 mx-1">/</span>
               {model.name}
             </p>
           </div>
 
           {preferred.length > 0 && (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {preferred.map((v) => {
                 const isTopPick = v.id === model.topPickVariantId;
                 return (
@@ -112,11 +101,11 @@ export function SummaryClient() {
 
   return (
     <div className="min-h-screen bg-black text-[#FAF6EE] print:bg-white print:text-black">
-      <div className="max-w-xl mx-auto px-4 py-8">
+      <div className="max-w-xl mx-auto px-4 py-8 print:py-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50 print:border-zinc-300">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center flex-shrink-0 print:border-zinc-400">
+          <div className="flex items-start gap-2.5">
+            <div className="w-6 h-6 bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center flex-shrink-0 print:hidden">
               <WatchIcon size={11} className="text-[#b8973a] print:text-black" />
             </div>
             <div>
@@ -136,9 +125,12 @@ export function SummaryClient() {
           </div>
 
           <div className="flex items-center gap-3 print:hidden">
-            <Link href="/" className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-              <ArrowLeft size={13} />
-              Collection
+            <Link
+              href="/"
+              className="border border-[#b8973a]/40 text-[#b8973a] text-[11px] tracking-widest uppercase px-3 py-1.5 hover:bg-[#b8973a]/10 transition-colors"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              All Watches
             </Link>
             <button
               onClick={() => window.print()}
@@ -177,12 +169,6 @@ export function SummaryClient() {
                 alizainali.com/jackswatch
               </p>
             </div>
-            <QRCodeSVG
-              value="https://alizainali.com/jackswatch"
-              size={56}
-              bgColor="transparent"
-              fgColor="#ffffff"
-            />
           </div>
         )}
       </div>

@@ -329,12 +329,6 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
               >
                 Ranked
               </span>
-              <span
-                className="text-[10px] text-zinc-400"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                #1 = best
-              </span>
             </div>
             <p
               className="text-[10px] text-zinc-500 mt-0.5"
