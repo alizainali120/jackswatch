@@ -52,14 +52,15 @@ interface WatchRowProps {
   onRate: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  isPassed?: boolean;
 }
 
-export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRowProps) {
+export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed = false }: WatchRowProps) {
 
   const gradient = getBrandGradient(model.brand);
 
   return (
-    <div className="bg-black">
+    <div className={cn("bg-black", isPassed && "opacity-50 saturate-0")}>
       <div className="flex flex-col">
 
         {/* ── Image — full-width landscape banner on all screen sizes ──── */}
@@ -114,17 +115,17 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
             <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
               {/* Rank reorder widget: ▲ rank# ▼ — always shown for ranked watches */}
               {rank !== null && (
-                <div className="flex flex-col items-center border border-zinc-800 flex-shrink-0">
+                <div className="flex flex-col items-center border border-zinc-700 flex-shrink-0">
                   <button
                     onClick={onMoveUp}
                     disabled={!onMoveUp}
                     title="Move up"
-                    className="px-2.5 py-1.5 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all disabled:opacity-30"
+                    className="px-3 py-2 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
                   >
-                    <ChevronUp size={11} strokeWidth={1.5} />
+                    <ChevronUp size={14} strokeWidth={2} />
                   </button>
                   <span
-                    className="text-[11px] text-zinc-400 tabular-nums border-t border-b border-zinc-800 px-2.5 py-0.5 w-full text-center"
+                    className="text-[12px] font-medium text-zinc-200 tabular-nums border-t border-b border-zinc-700 px-3 py-1 w-full text-center"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {rank}
@@ -133,9 +134,9 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
                     onClick={onMoveDown}
                     disabled={!onMoveDown}
                     title="Move down"
-                    className="px-2.5 py-1.5 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all disabled:opacity-30"
+                    className="px-3 py-2 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
                   >
-                    <ChevronDown size={11} strokeWidth={1.5} />
+                    <ChevronDown size={14} strokeWidth={2} />
                   </button>
                 </div>
               )}

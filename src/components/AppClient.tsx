@@ -321,21 +321,27 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
 
         {/* RANKED section */}
         <section className="mb-8">
-          <div className="px-4 pb-3 border-b border-[#b8973a]/20 flex items-baseline justify-between">
-            <span
-              className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Ranked
-            </span>
-            {preferredModels.length > 0 && (
+          <div className="px-4 pb-3 border-b border-[#b8973a]/20">
+            <div className="flex items-baseline justify-between">
               <span
-                className="text-[10px] text-zinc-500"
+                className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                #1 = favorite
+                Ranked
               </span>
-            )}
+              <span
+                className="text-[10px] text-zinc-400"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                #1 = best
+              </span>
+            </div>
+            <p
+              className="text-[10px] text-zinc-500 mt-0.5"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              Order from most to least favourite using the arrows
+            </p>
           </div>
 
           {preferredModels.length === 0 ? (
@@ -403,6 +409,7 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
                   <WatchRow
                     model={model}
                     rank={null}
+                    isPassed
                     onRate={() => setActiveModelId(model.id)}
                   />
                 </div>
