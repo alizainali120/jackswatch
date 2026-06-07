@@ -330,12 +330,6 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
                 Ranked
               </span>
             </div>
-            <p
-              className="text-[10px] text-zinc-500 mt-0.5"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Order from most to least favourite using the arrows
-            </p>
           </div>
 
           {preferredModels.length === 0 ? (
