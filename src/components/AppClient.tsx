@@ -133,6 +133,46 @@ export function AppClient() {
     setActiveModelId(null);
   }, [activeModelId, models]);
 
+  const handleRank = useCallback((modelId: string) => {
+    setModels((prev) => {
+      const maxRank = Math.max(0, ...prev.filter((m) => m.rank !== null).map((m) => m.rank!));
+      const newRank = maxRank + 1;
+      setSaving(true);
+      fetch(`/api/watches/${modelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rank: newRank }),
+      }).catch(console.error).finally(() => setSaving(false));
+      return prev.map((m) => m.id === modelId ? { ...m, rank: newRank } : m);
+    });
+  }, []);
+
+  const handleUnrank = useCallback((modelId: string) => {
+    setModels((prev) => {
+      setSaving(true);
+      fetch(`/api/watches/${modelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rank: null }),
+      }).catch(console.error).finally(() => setSaving(false));
+      // Renumber the remaining ranked watches
+      const remaining = prev
+        .filter((m) => m.rank !== null && m.id !== modelId)
+        .sort((a, b) => a.rank! - b.rank!)
+        .map((m, i) => ({ ...m, rank: i + 1 }));
+      fetch("/api/watches/rank", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: remaining.map((m) => m.id) }),
+      }).catch(console.error);
+      return prev.map((m) => {
+        if (m.id === modelId) return { ...m, rank: null };
+        const updated = remaining.find((r) => r.id === m.id);
+        return updated ?? m;
+      });
+    });
+  }, []);
+
   const handleAddWatch = useCallback(async (
     brand: string,
     name: string,
@@ -229,12 +269,12 @@ export function AppClient() {
 
         {/* RANKED section */}
         <section className="mb-8">
-          <div className="px-4 pb-3 border-b border-[#b8973a]/20 flex items-center justify-between">
+          <div className="px-4 pb-3 border-b border-[#b8973a]/20">
             <span
               className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              Ranked ({ranked.length})
+              Ranked
             </span>
           </div>
 
@@ -253,6 +293,7 @@ export function AppClient() {
                 onRate={() => setActiveModelId(model.id)}
                 onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
                 onMoveDown={i < ranked.length - 1 ? () => handleMoveDown(model.id) : undefined}
+                onUnrank={() => handleUnrank(model.id)}
               />
             ))
           )}
@@ -261,12 +302,12 @@ export function AppClient() {
         {/* UNRANKED section */}
         {unranked.length > 0 && (
           <section>
-            <div className="px-4 pb-3 border-b border-zinc-800 flex items-center justify-between">
+            <div className="px-4 pb-3 border-b border-zinc-800">
               <span
                 className="text-[9px] tracking-[0.3em] uppercase text-[#444444]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                Unranked ({unranked.length})
+                Unranked
               </span>
             </div>
             {unranked.map((model) => (
@@ -275,6 +316,7 @@ export function AppClient() {
                 model={model}
                 rank={null}
                 onRate={() => setActiveModelId(model.id)}
+                onRank={() => handleRank(model.id)}
               />
             ))}
           </section>

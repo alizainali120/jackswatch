@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, ChevronUp, ChevronDown, Star } from "lucide-react";
+import { ExternalLink, ChevronUp, ChevronDown, Star, ListOrdered, X } from "lucide-react";
 import type { WatchModel, WatchVariant } from "@/types/watch";
 import { cn, getBrandGradient } from "@/lib/utils";
 
@@ -46,9 +46,11 @@ interface WatchRowProps {
   onRate: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onRank?: () => void;
+  onUnrank?: () => void;
 }
 
-export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRowProps) {
+export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, onUnrank }: WatchRowProps) {
 
   const gradient = getBrandGradient(model.brand);
 
@@ -140,13 +142,33 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRow
               </p>
             </div>
 
-            <button
-              onClick={onRate}
-              className="border border-[#b8973a] text-[#b8973a] px-2.5 py-1.5 text-[10px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors flex-shrink-0 mt-0.5"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Rate →
-            </button>
+            <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+              {onRank && (
+                <button
+                  onClick={onRank}
+                  title="Add to ranking"
+                  className="w-7 h-7 flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  <ListOrdered size={12} />
+                </button>
+              )}
+              {onUnrank && (
+                <button
+                  onClick={onUnrank}
+                  title="Remove from ranking"
+                  className="w-7 h-7 flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              )}
+              <button
+                onClick={onRate}
+                className="border border-[#b8973a] text-[#b8973a] px-2.5 py-1.5 text-[10px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors cursor-pointer"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                Rate →
+              </button>
+            </div>
           </div>
 
           {/* Separator */}
