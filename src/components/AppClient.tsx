@@ -23,12 +23,20 @@ function HowToGuide() {
     <div className="max-w-2xl mx-auto px-4 mb-6">
       <div className="border border-zinc-800 bg-zinc-950 px-4 py-4">
         <div className="flex items-start justify-between gap-4 mb-3">
-          <p
-            className="text-[9px] uppercase tracking-[0.25em] text-zinc-500"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            How it works
-          </p>
+          <div>
+            <p
+              className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 mb-1.5"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              How it works
+            </p>
+            <p
+              className="text-[11px] text-zinc-400 leading-snug"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              Rank watches and order them in your preferred sequence. Add any missing watch from the list.
+            </p>
+          </div>
           <button
             onClick={() => setDismissed(true)}
             className="text-zinc-700 hover:text-zinc-400 transition-colors flex-shrink-0 text-[10px] leading-none"
@@ -78,7 +86,7 @@ export function AppClient() {
       .catch(() => { setError("Couldn't reach the server."); setLoading(false); });
   }, []);
 
-  const ranked = models
+  const preferredModels = models
     .filter((m) => m.variants.some((v) => v.reaction === "preferred"))
     .sort((a, b) => {
       if (a.rank !== null && b.rank !== null) return a.rank - b.rank;
@@ -86,7 +94,9 @@ export function AppClient() {
       if (b.rank !== null) return 1;
       return 0;
     });
-  const discarded = models.filter(
+  const topPick = preferredModels.filter((m) => m.topPickVariantId !== null);
+  const preferred = preferredModels.filter((m) => m.topPickVariantId === null);
+  const passed = models.filter(
     (m) =>
       m.variants.length > 0 &&
       m.variants.every((v) => v.reaction !== null) &&
@@ -155,8 +165,9 @@ export function AppClient() {
       if (reaction === "preferred") {
         const model = updatedModels.find((m) => m.id === modelId);
         if (model && model.rank === null) {
-          const maxRank = Math.max(0, ...updatedModels.filter((m) => m.rank !== null).map((m) => m.rank!));
-          const newRank = maxRank + 1;
+          const rankedModels = updatedModels.filter((m) => m.id !== modelId && m.variants.some((v) => v.reaction === "preferred"));
+          const maxRank = Math.max(0, ...rankedModels.map((m) => m.rank ?? 0));
+          const newRank = Math.max(maxRank + 1, rankedModels.length + 1);
           setSaving(true);
           fetch(`/api/watches/${modelId}`, {
             method: "PUT",
@@ -251,8 +262,10 @@ export function AppClient() {
     <div className="min-h-screen bg-black text-[#FAF6EE]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-black/95 backdrop-blur-sm border-b border-zinc-800/50">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3 relative">
+          <div className="w-16" />
+
+          <div className="flex items-center gap-2.5 absolute left-1/2 -translate-x-1/2">
             <div className="w-6 h-6 bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center flex-shrink-0">
               <WatchIcon size={11} className="text-[#b8973a]" />
             </div>
@@ -298,64 +311,80 @@ export function AppClient() {
         </div>
       )}
 
-      {/* Page title */}
-      <div className="max-w-2xl mx-auto px-4 pt-10 pb-6 text-center">
-        <h1
-          className="text-4xl font-light tracking-[0.25em] uppercase text-[#FAF6EE]"
-          style={{ fontFamily: "var(--font-display)" }}
-        >
-          The Collection
-        </h1>
-      </div>
-
       {/* How-to guide */}
-      <HowToGuide />
+      <div className="pt-8">
+        <HowToGuide />
+      </div>
 
       <main className="max-w-2xl mx-auto pb-16">
 
-        {/* RANKED section */}
-        <section className="mb-8">
-          <div className="px-4 pb-3 border-b border-[#b8973a]/20">
-            <span
-              className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Ranked
-            </span>
-          </div>
-
-          {ranked.length === 0 ? (
-            <div className="px-4 py-10 text-center">
-              <p className="text-xs text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
-                Mark a variant Preferred to move a watch here.
-              </p>
+        {/* TOP PICK section */}
+        {topPick.length > 0 && (
+          <section className="mb-8">
+            <div className="px-4 pb-3 border-b border-[#b8973a]/20">
+              <span
+                className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Top Pick
+              </span>
             </div>
-          ) : (
-            ranked.map((model, i) => (
+            {topPick.map((model, i) => (
               <WatchRow
                 key={model.id}
                 model={model}
                 rank={i + 1}
                 onRate={() => setActiveModelId(model.id)}
                 onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                onMoveDown={i < ranked.length - 1 ? () => handleMoveDown(model.id) : undefined}
+                onMoveDown={i < topPick.length - 1 ? () => handleMoveDown(model.id) : undefined}
+              />
+            ))}
+          </section>
+        )}
+
+        {/* PREFERRED section */}
+        <section className="mb-8">
+          <div className="px-4 pb-3 border-b border-[#b8973a]/20">
+            <span
+              className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              Preferred
+            </span>
+          </div>
+
+          {preferred.length === 0 && topPick.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <p className="text-xs text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
+                Mark a variant Preferred to move a watch here.
+              </p>
+            </div>
+          ) : preferred.length === 0 ? null : (
+            preferred.map((model, i) => (
+              <WatchRow
+                key={model.id}
+                model={model}
+                rank={topPick.length + i + 1}
+                onRate={() => setActiveModelId(model.id)}
+                onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
+                onMoveDown={i < preferred.length - 1 ? () => handleMoveDown(model.id) : undefined}
               />
             ))
           )}
         </section>
 
-        {/* DISCARDED section */}
-        {discarded.length > 0 && (
+        {/* UNRANKED section */}
+        {unranked.length > 0 && (
           <section className="mb-8">
-            <div className="px-4 pb-3 border-b border-zinc-800">
+            <div className="px-4 pb-3 border-b border-[#b8973a]/20">
               <span
-                className="text-[9px] tracking-[0.3em] uppercase text-zinc-600"
+                className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                Discarded
+                Unranked
               </span>
             </div>
-            {discarded.map((model) => (
+            {unranked.map((model) => (
               <WatchRow
                 key={model.id}
                 model={model}
@@ -366,18 +395,18 @@ export function AppClient() {
           </section>
         )}
 
-        {/* UNRANKED section */}
-        {unranked.length > 0 && (
+        {/* PASSED section */}
+        {passed.length > 0 && (
           <section>
-            <div className="px-4 pb-3 border-b border-zinc-800">
+            <div className="px-4 pb-3 border-b border-[#b8973a]/20">
               <span
-                className="text-[9px] tracking-[0.3em] uppercase text-[#444444]"
+                className="text-[9px] tracking-[0.3em] uppercase text-[#b8973a]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                Unranked
+                Passed
               </span>
             </div>
-            {unranked.map((model) => (
+            {passed.map((model) => (
               <WatchRow
                 key={model.id}
                 model={model}

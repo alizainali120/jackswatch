@@ -1,17 +1,16 @@
 "use client";
 
-import { ExternalLink, ChevronUp, ChevronDown, Star } from "lucide-react";
+import { ExternalLink, ChevronUp, ChevronDown } from "lucide-react";
 import type { WatchModel, WatchVariant } from "@/types/watch";
 import { cn, getBrandGradient } from "@/lib/utils";
 
 function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick: boolean }) {
   const isPassed = variant.reaction === "pass";
   const isPreferred = variant.reaction === "preferred";
-
   const specs = variant.label || "";
 
   return (
-    <div className={cn("transition-opacity", isPassed && "opacity-35", isPreferred && "bg-[#F5E6C8]/5")}>
+    <div className={cn("transition-opacity", isPassed && "opacity-35")}>
       {/* Single line: ref (linked) · specs */}
       <p className="text-[10px]" style={{ fontFamily: "var(--font-mono)" }}>
         {variant.link ? (
@@ -35,7 +34,14 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
         )}
         {specs && <span className="text-zinc-600"> · {specs}</span>}
         {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
-        {isTopPick && <Star size={9} className="text-[#b8973a] fill-[#b8973a] flex-shrink-0 inline ml-1 align-middle" />}
+        {isTopPick && (
+          <span
+            className="inline-block ml-1.5 px-1 py-px text-[8px] uppercase tracking-widest border border-[#b8973a]/60 text-[#b8973a] align-middle leading-none"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            Top Pick
+          </span>
+        )}
       </p>
     </div>
   );
