@@ -101,7 +101,7 @@ function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
     name: row[2] ?? "",
     heroImage: row[3] ?? "",
     notes: row[4] ?? "",
-    rank: parseInt(row[5]) || 99,
+    rank: row[5] && !isNaN(parseInt(row[5])) ? parseInt(row[5]) : null,
     reactionTags,
     topPickVariantId: row[7] || null,
   };
@@ -127,7 +127,7 @@ function rowToVariant(row: string[]): WatchVariant {
 function modelToRow(m: Omit<WatchModel, "variants">): string[] {
   return [
     m.id, m.brand, m.name, m.heroImage, m.notes,
-    String(m.rank), JSON.stringify(m.reactionTags ?? []), m.topPickVariantId ?? "",
+    m.rank !== null ? String(m.rank) : "", JSON.stringify(m.reactionTags ?? []), m.topPickVariantId ?? "",
   ];
 }
 
@@ -177,7 +177,12 @@ export async function getAllModels(): Promise<WatchModel[]> {
 
   return models
     .map((m) => ({ ...m, variants: variants.filter((v) => v.modelId === m.id) }))
-    .sort((a, b) => a.rank - b.rank);
+    .sort((a, b) => {
+      if (a.rank === null && b.rank === null) return 0;
+      if (a.rank === null) return 1;
+      if (b.rank === null) return -1;
+      return a.rank - b.rank;
+    });
 }
 
 export async function updateModelNotes(id: string, notes: string): Promise<void> {
@@ -225,6 +230,18 @@ export async function updateVariantReaction(id: string, reaction: Reaction | nul
     range: `${VARIANTS_TAB}!L${rowIdx}`,
     valueInputOption: "RAW",
     requestBody: { values: [[reaction ?? ""]] },
+  });
+}
+
+export async function updateModelRank(id: string, rank: number | null): Promise<void> {
+  const sheets = await client();
+  const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
+  if (rowIdx === null) return;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${MODELS_TAB}!F${rowIdx}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[rank !== null ? String(rank) : ""]] },
   });
 }
 

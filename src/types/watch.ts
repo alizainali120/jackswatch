@@ -25,6 +25,6 @@ export interface WatchModel {
   notes: string;
   reactionTags: string[];
   topPickVariantId: string | null;
-  rank: number;
+  rank: number | null;
   variants: WatchVariant[];
 }

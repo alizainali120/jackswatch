@@ -9,7 +9,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     notes: "The most recognizable dive watch ever made. Two personalities — the clean no-date and the practical date. Both wear identically on the wrist. The difference is philosophical.",
     reactionTags: [],
     topPickVariantId: null,
-    rank: 1,
+    rank: null,
     variants: [
       {
         id: "var-sub-124060",
@@ -63,7 +63,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     notes: "Omega's most versatile sports watch — dressier than the Diver but still substantial. The teak-pattern dial is genuinely beautiful in person. METAS Master Chronometer certified.",
     reactionTags: [],
     topPickVariantId: null,
-    rank: 2,
+    rank: null,
     variants: [
       {
         id: "var-at-41-blue",
@@ -117,7 +117,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     notes: "The smartest buy in the lineup. 39mm has vintage proportions that actually work on modern wrists. In-house movement with Rolex DNA. Hard to argue with the value.",
     reactionTags: [],
     topPickVariantId: null,
-    rank: 3,
+    rank: null,
     variants: [
       {
         id: "var-bb58-navy",
@@ -171,7 +171,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     notes: "Clean, functional, understated. The longest power reserve in this lineup. A watch for people who don't need anyone to know what they're wearing.",
     reactionTags: [],
     topPickVariantId: null,
-    rank: 4,
+    rank: null,
     variants: [
       {
         id: "var-markxx-blue",
@@ -211,7 +211,7 @@ export const DEFAULT_MODELS: WatchModel[] = [
     notes: "The wildcard. A square case in a world of round ones — 120 years old and still looks modern. If Jack wants to stand out from every other Rolex in the room, this is the move.",
     reactionTags: [],
     topPickVariantId: null,
-    rank: 5,
+    rank: null,
     variants: [
       {
         id: "var-santos-medium",
