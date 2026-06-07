@@ -116,7 +116,7 @@ export function SummaryClient() {
         >
           Jack&apos;s Verdict
         </h1>
-        <p className="text-[10px] tracking-widest text-zinc-600 uppercase mb-2">
+        <p className="text-[10px] tracking-widest text-zinc-600 print:text-zinc-500 uppercase mb-2">
           {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </p>
 
@@ -139,19 +139,29 @@ export function SummaryClient() {
         {models.length > 0 && (
           <div className="mt-10 pt-6 border-t border-zinc-800 print:border-zinc-300 flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-600">Jack&apos;s Watch Guide</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-600 print:text-zinc-500">Jack&apos;s Watch Guide</p>
               <p
-                className="text-[10px] text-zinc-700 mt-0.5"
+                className="text-[10px] text-zinc-700 print:text-zinc-500 mt-0.5"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 alizainali.com/jackswatch
               </p>
             </div>
+            {/* Screen: white on dark */}
             <QRCodeSVG
               value="https://alizainali.com/jackswatch"
               size={56}
               bgColor="transparent"
               fgColor="#ffffff"
+              className="print:hidden"
+            />
+            {/* Print: black on white */}
+            <QRCodeSVG
+              value="https://alizainali.com/jackswatch"
+              size={56}
+              bgColor="transparent"
+              fgColor="#000000"
+              className="hidden print:block"
             />
           </div>
         )}
