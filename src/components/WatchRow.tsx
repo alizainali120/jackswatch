@@ -58,27 +58,6 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, on
     <div className="border-b border-[#b8973a]/10 bg-black">
       <div className="flex flex-col sm:flex-row">
 
-        {/* ── Rank arrows — left of image, desktop only ───────────────────── */}
-        {rank !== null && (
-          <div className="hidden sm:flex flex-col items-center justify-center gap-0.5 w-8 bg-zinc-950 border-r border-zinc-900">
-            <button
-              onClick={onMoveUp}
-              disabled={!onMoveUp}
-              className="w-full flex-1 flex items-center justify-center text-zinc-600 hover:text-[#FAF6EE] hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
-            >
-              <ChevronUp size={14} strokeWidth={1.5} />
-            </button>
-            <div className="w-4 h-px bg-zinc-800" />
-            <button
-              onClick={onMoveDown}
-              disabled={!onMoveDown}
-              className="w-full flex-1 flex items-center justify-center text-zinc-600 hover:text-[#FAF6EE] hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
-            >
-              <ChevronDown size={14} strokeWidth={1.5} />
-            </button>
-          </div>
-        )}
-
         {/* ── Image ──────────────────────────────────────────────────────── */}
         <div className="relative flex-shrink-0">
           {/* Mobile: full-width banner, 180px tall */}
@@ -95,7 +74,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, on
               <img
                 src={model.heroImage}
                 alt=""
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-cover object-center sm:object-top"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -108,24 +87,12 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, on
               </div>
             )}
           </div>
-
-          {/* Rank badge — overlaid top-left corner */}
-          {rank !== null && (
-            <div className="absolute top-2 left-2 min-w-[22px] h-[22px] bg-black/75 px-1 flex items-center justify-center">
-              <span
-                className="text-[10px] text-zinc-300 leading-none"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {rank}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 px-4 py-3 flex flex-col gap-2">
 
-          {/* Header: brand + name + Rate + ↑↓ */}
+          {/* Header: brand + name + reorder widget + action buttons */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p
@@ -143,6 +110,33 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, on
             </div>
 
             <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+              {/* Rank reorder widget: ▲ rank# ▼ — always shown for ranked watches */}
+              {rank !== null && (
+                <div className="flex flex-col items-center border border-zinc-800 flex-shrink-0">
+                  <button
+                    onClick={onMoveUp}
+                    disabled={!onMoveUp}
+                    title="Move up"
+                    className="px-2.5 py-1 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <ChevronUp size={11} strokeWidth={1.5} />
+                  </button>
+                  <span
+                    className="text-[10px] text-zinc-500 tabular-nums border-t border-b border-zinc-800 px-2 py-0.5 w-full text-center"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    {rank}
+                  </span>
+                  <button
+                    onClick={onMoveDown}
+                    disabled={!onMoveDown}
+                    title="Move down"
+                    className="px-2.5 py-1 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <ChevronDown size={11} strokeWidth={1.5} />
+                  </button>
+                </div>
+              )}
               {onRank && (
                 <button
                   onClick={onRank}

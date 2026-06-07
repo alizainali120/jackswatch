@@ -185,6 +185,18 @@ export async function getAllModels(): Promise<WatchModel[]> {
     });
 }
 
+export async function updateModelHeroImage(id: string, url: string): Promise<void> {
+  const sheets = await client();
+  const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
+  if (rowIdx === null) return;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${MODELS_TAB}!D${rowIdx}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[url]] },
+  });
+}
+
 export async function updateModelNotes(id: string, notes: string): Promise<void> {
   const sheets = await client();
   const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);

@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { WatchModel } from "@/types/watch";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -10,23 +9,6 @@ export function generateId(): string {
   return crypto.randomUUID();
 }
 
-export function likenessScore(model: WatchModel): number | null {
-  const rated = model.variants.filter((v) => v.reaction !== null);
-  if (rated.length === 0) return null;
-  const preferred = model.variants.filter((v) => v.reaction === "preferred").length;
-  return Math.round((preferred / model.variants.length) * 100);
-}
-
-export function ratingLabel(model: WatchModel): string {
-  const preferred = model.variants.filter((v) => v.reaction === "preferred").length;
-  const pass = model.variants.filter((v) => v.reaction === "pass").length;
-  const neutral = model.variants.filter((v) => v.reaction === null).length;
-  const parts = [];
-  if (preferred > 0) parts.push(`${preferred} preferred`);
-  if (neutral > 0) parts.push(`${neutral} neutral`);
-  if (pass > 0) parts.push(`${pass} passed`);
-  return parts.join(" · ");
-}
 
 export const BRAND_GRADIENTS: Record<string, string> = {
   Rolex: "from-[#1a3a1a] to-[#0d1f0d]",

@@ -8,6 +8,58 @@ import { AddWatchModal } from "@/components/AddWatchModal";
 import { Watch as WatchIcon, Loader2, AlertCircle, Plus } from "lucide-react";
 import Link from "next/link";
 
+const STEPS = [
+  { label: "Rate →", desc: "Open any watch and mark each variant Preferred or Pass." },
+  { label: "Top Pick", desc: "Star the one variant you'd actually buy." },
+  { label: "Notes", desc: "Add context — heritage, price, your gut feeling." },
+  { label: "↑ ↓", desc: "Drag ranked watches into your preferred order." },
+  { label: "Summary →", desc: "Print or share your final verdict." },
+];
+
+function HowToGuide() {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+  return (
+    <div className="max-w-2xl mx-auto px-4 mb-6">
+      <div className="border border-zinc-800 bg-zinc-950 px-4 py-4">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <p
+            className="text-[9px] uppercase tracking-[0.25em] text-zinc-500"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            How it works
+          </p>
+          <button
+            onClick={() => setDismissed(true)}
+            className="text-zinc-700 hover:text-zinc-400 transition-colors flex-shrink-0 text-[10px] leading-none"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            dismiss
+          </button>
+        </div>
+        <ol className="space-y-2">
+          {STEPS.map((s) => (
+            <li key={s.label} className="flex items-baseline gap-3">
+              <span
+                className="text-[10px] text-[#b8973a] flex-shrink-0 w-16"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {s.label}
+              </span>
+              <span
+                className="text-[11px] text-zinc-500 leading-snug"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {s.desc}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
 export function AppClient() {
   const [models, setModels] = useState<WatchModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +153,10 @@ export function AppClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ topPickVariantId: variantId }),
     }).catch(console.error).finally(() => setSaving(false));
+  }, []);
+
+  const handleUpdateImage = useCallback((modelId: string, url: string) => {
+    setModels((prev) => prev.map((m) => m.id !== modelId ? m : { ...m, heroImage: url }));
   }, []);
 
   const handleUpdateNotes = useCallback((modelId: string, notes: string) => {
@@ -265,6 +321,9 @@ export function AppClient() {
         </h1>
       </div>
 
+      {/* How-to guide */}
+      <HowToGuide />
+
       <main className="max-w-2xl mx-auto pb-16">
 
         {/* RANKED section */}
@@ -341,6 +400,7 @@ export function AppClient() {
           }
           onSetTopPick={(variantId) => handleSetTopPick(activeModel.id, variantId)}
           onUpdateNotes={(notes) => handleUpdateNotes(activeModel.id, notes)}
+          onUpdateImage={(url) => handleUpdateImage(activeModel.id, url)}
         />
       )}
     </div>

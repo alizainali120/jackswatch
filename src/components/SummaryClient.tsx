@@ -8,61 +8,79 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 
 function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
-  const preferred = model.variants.filter((v) => v.reaction === "preferred");
+  const preferred = model.variants
+    .filter((v) => v.reaction === "preferred")
+    .sort((a, b) => {
+      if (a.id === model.topPickVariantId) return -1;
+      if (b.id === model.topPickVariantId) return 1;
+      return 0;
+    });
 
   return (
-    <div className="py-5 border-b border-zinc-800/60 print:border-zinc-200 last:border-0">
-      {/* Rank + brand + name */}
-      <div className="flex items-baseline gap-3 mb-2">
+    <div className="py-5 border-b border-zinc-800/40 print:border-zinc-300 last:border-0 print:py-4">
+      <div className="flex items-baseline gap-3">
         <span
-          className="text-[11px] text-zinc-600 print:text-zinc-400 tabular-nums w-4 flex-shrink-0"
+          className="text-[10px] text-zinc-600 print:text-zinc-500 tabular-nums w-5 flex-shrink-0 pt-px"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          {rank}
+          {rank}.
         </span>
-        <div>
-          <span
-            className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 print:text-zinc-400 mr-2"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            {model.brand}
-          </span>
-          <span
-            className="text-base font-light text-[#FAF6EE] print:text-black"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {model.name}
-          </span>
+        <div className="flex-1 min-w-0">
+          <div className="mb-2">
+            <span
+              className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 print:text-zinc-500 mr-2"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              {model.brand}
+            </span>
+            <span
+              className="text-[17px] font-light text-[#FAF6EE] print:text-black print:font-normal"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {model.name}
+            </span>
+          </div>
+
+          {preferred.length > 0 && (
+            <div className="space-y-1">
+              {preferred.map((v) => {
+                const isTopPick = v.id === model.topPickVariantId;
+                return (
+                  <div key={v.id} className="flex items-baseline gap-1.5">
+                    <span
+                      className={cn(
+                        "text-[11px] leading-relaxed",
+                        isTopPick
+                          ? "text-[#b8973a] print:text-black font-medium"
+                          : "text-zinc-400 print:text-zinc-700"
+                      )}
+                      style={{ fontFamily: "var(--font-mono)" }}
+                    >
+                      {v.reference}
+                    </span>
+                    {v.label && (
+                      <span
+                        className="text-[11px] text-zinc-600 print:text-zinc-500 leading-relaxed"
+                        style={{ fontFamily: "var(--font-mono)" }}
+                      >
+                        · {v.label}
+                      </span>
+                    )}
+                    {isTopPick && (
+                      <span
+                        className="text-[10px] text-zinc-600 print:text-zinc-500 leading-relaxed"
+                        style={{ fontFamily: "var(--font-mono)" }}
+                      >
+                        [top pick]
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Variants — one per line, indented */}
-      {preferred.length > 0 && (
-        <div className="ml-7 space-y-1">
-          {preferred.map((v) => {
-            const isTopPick = v.id === model.topPickVariantId;
-            return (
-              <div key={v.id} className="flex items-baseline gap-2">
-                <span className="text-zinc-700 print:text-zinc-400 flex-shrink-0 text-[10px]">—</span>
-                <p
-                  className="text-[11px] text-zinc-300 print:text-zinc-700 leading-snug"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  <span className={cn(isTopPick && "text-[#b8973a] print:text-black font-medium")}>
-                    {v.reference}
-                  </span>
-                  {v.label && (
-                    <span className="text-zinc-500 print:text-zinc-500"> · {v.label}</span>
-                  )}
-                  {isTopPick && (
-                    <span className="text-zinc-600 print:text-zinc-400 ml-2 text-[10px] not-italic">(top pick)</span>
-                  )}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
@@ -116,7 +134,7 @@ export function SummaryClient() {
         >
           Jack&apos;s Verdict
         </h1>
-        <p className="text-[10px] tracking-widest text-zinc-600 print:text-zinc-500 uppercase mb-2">
+        <p className="text-[10px] tracking-widest text-zinc-600 print:text-zinc-500 uppercase mb-4">
           {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </p>
 
