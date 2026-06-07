@@ -8,41 +8,59 @@ import { AddWatchModal } from "@/components/AddWatchModal";
 import { Watch as WatchIcon, Loader2, AlertCircle, Plus } from "lucide-react";
 import Link from "next/link";
 
-function HowToGuide() {
-  const [dismissed, setDismissed] = useState(false);
-  if (dismissed) return null;
+const ONBOARDING_KEY = "jacks-watch-onboarding-dismissed";
+
+function OnboardingCard() {
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setDismissed(localStorage.getItem(ONBOARDING_KEY) === "true");
+  }, []);
+
+  function handleDismiss() {
+    localStorage.setItem(ONBOARDING_KEY, "true");
+    setDismissed(true);
+  }
+
+  if (dismissed !== false) return null;
+
   return (
     <div className="max-w-2xl mx-auto px-4 mb-6">
-      <div className="border border-zinc-800 bg-zinc-950 px-4 py-4">
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div>
-            <p
-              className="text-[9px] uppercase tracking-[0.25em] text-zinc-500 mb-1.5"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              How it works
-            </p>
-            <p
-              className="text-[11px] text-zinc-400 leading-snug"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Rank watches and order them in your preferred sequence. Add any missing watch from the list.
-            </p>
-          </div>
-          <button
-            onClick={() => setDismissed(true)}
-            className="text-zinc-700 hover:text-zinc-400 transition-colors flex-shrink-0 text-[10px] leading-none"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            dismiss
-          </button>
-        </div>
+      <div className="border border-zinc-800 bg-zinc-950 rounded-sm px-5 py-5">
         <p
-          className="text-[11px] text-zinc-500 leading-snug"
+          className="text-[10px] uppercase tracking-[0.3em] text-[#b8973a] mb-3"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          Rate each variant Preferred or Pass. Watches with a preferred variant move to Ranked — reorder them with the arrows. Pass on all variants and the watch is Discarded. Share your picks via Summary.
+          Jack&apos;s Watch Picks
         </p>
+
+        <div className="space-y-3 mb-5">
+          <p className="text-[12px] text-zinc-300 leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
+            Rate each watch based purely on what you like - the color, dial, brand, or just what feels right. Ignore price entirely; this is a style guide, not a shopping list. I may end up getting a used piece or a similar style from a different brand.
+          </p>
+          <ul className="space-y-2">
+            <li className="text-[11px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="text-zinc-600 mr-1.5">01</span>
+              Mark each variant <span className="text-emerald-400">Preferred</span> or <span className="text-zinc-400">Pass</span>. Any watch with a Preferred variant moves into your Ranked list.
+            </li>
+            <li className="text-[11px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="text-zinc-600 mr-1.5">02</span>
+              In Ranked, drag watches into order from most to least favorite. If you marked more than one variant Preferred, pin your single top pick.
+            </li>
+            <li className="text-[11px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
+              <span className="text-zinc-600 mr-1.5">03</span>
+              Add notes whenever something stands out — love the dial, hate the bracelet, size feels off. The more detail, the better I can match your style.
+            </li>
+          </ul>
+        </div>
+
+        <button
+          onClick={handleDismiss}
+          className="border border-[#b8973a] text-[#b8973a] text-[10px] tracking-widest uppercase px-4 py-1.5 hover:bg-[#b8973a]/10 transition-colors"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          Got it
+        </button>
       </div>
     </div>
   );
@@ -152,9 +170,10 @@ export function AppClient() {
       });
 
       if (reaction === "preferred") {
-        const model = updatedModels.find((m) => m.id === modelId);
-        if (model && model.rank === null) {
-          const maxRank = Math.max(0, ...updatedModels.filter((m) => m.id !== modelId).map((m) => m.rank ?? 0));
+        const hadPreferred = prev.find((m) => m.id === modelId)?.variants.some((v) => v.reaction === "preferred") ?? false;
+        if (!hadPreferred) {
+          const rankedOthers = updatedModels.filter((m) => m.id !== modelId && m.rank !== null);
+          const maxRank = rankedOthers.length > 0 ? Math.max(...rankedOthers.map((m) => m.rank!)) : 0;
           const newRank = maxRank + 1;
           setSaving(true);
           fetch(`/api/watches/${modelId}`, {
@@ -293,9 +312,9 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
         </div>
       )}
 
-      {/* How-to guide */}
+      {/* Onboarding card */}
       <div className="pt-8">
-        <HowToGuide />
+        <OnboardingCard />
       </div>
 
       <main className="max-w-2xl mx-auto pb-16">
