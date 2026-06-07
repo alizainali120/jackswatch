@@ -10,9 +10,9 @@ import Link from "next/link";
 
 const STEPS = [
   { label: "Rate →", desc: "Open any watch and mark each variant Preferred or Pass." },
-  { label: "Top Pick", desc: "Star the one variant you'd actually buy." },
-  { label: "Notes", desc: "Add context — heritage, price, your gut feeling." },
-  { label: "↑ ↓", desc: "Drag ranked watches into your preferred order." },
+  { label: "Ranked", desc: "Mark at least one variant Preferred and it moves to Ranked automatically." },
+  { label: "Discarded", desc: "Pass on all variants and the watch moves to Discarded." },
+  { label: "↑ ↓", desc: "Reorder ranked watches using the arrows." },
   { label: "Summary →", desc: "Print or share your final verdict." },
 ];
 
@@ -79,9 +79,24 @@ export function AppClient() {
   }, []);
 
   const ranked = models
-    .filter((m) => m.rank !== null)
-    .sort((a, b) => a.rank! - b.rank!);
-  const unranked = models.filter((m) => m.rank === null);
+    .filter((m) => m.variants.some((v) => v.reaction === "preferred"))
+    .sort((a, b) => {
+      if (a.rank !== null && b.rank !== null) return a.rank - b.rank;
+      if (a.rank !== null) return -1;
+      if (b.rank !== null) return 1;
+      return 0;
+    });
+  const discarded = models.filter(
+    (m) =>
+      m.variants.length > 0 &&
+      m.variants.every((v) => v.reaction !== null) &&
+      !m.variants.some((v) => v.reaction === "preferred")
+  );
+  const unranked = models.filter(
+    (m) =>
+      !m.variants.some((v) => v.reaction === "preferred") &&
+      !(m.variants.length > 0 && m.variants.every((v) => v.reaction !== null))
+  );
   const activeModel = models.find((m) => m.id === activeModelId) ?? null;
 
   // ── Rank reordering ───────────────────────────────────────────────────────
@@ -125,8 +140,8 @@ export function AppClient() {
   // ── Modal callbacks ───────────────────────────────────────────────────────
 
   const handleUpdateVariant = useCallback((modelId: string, variantId: string, reaction: Reaction | null) => {
-    setModels((prev) =>
-      prev.map((m) =>
+    setModels((prev) => {
+      const updatedModels = prev.map((m) =>
         m.id !== modelId ? m : {
           ...m,
           variants: m.variants.map((v) => v.id === variantId ? { ...v, reaction } : v),
@@ -135,8 +150,25 @@ export function AppClient() {
               ? null
               : m.topPickVariantId,
         }
-      )
-    );
+      );
+
+      if (reaction === "preferred") {
+        const model = updatedModels.find((m) => m.id === modelId);
+        if (model && model.rank === null) {
+          const maxRank = Math.max(0, ...updatedModels.filter((m) => m.rank !== null).map((m) => m.rank!));
+          const newRank = maxRank + 1;
+          setSaving(true);
+          fetch(`/api/watches/${modelId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rank: newRank }),
+          }).catch(console.error).finally(() => setSaving(false));
+          return updatedModels.map((m) => m.id === modelId ? { ...m, rank: newRank } : m);
+        }
+      }
+
+      return updatedModels;
+    });
     setSaving(true);
     fetch(`/api/variants/${variantId}`, {
       method: "PUT",
@@ -181,63 +213,7 @@ export function AppClient() {
   }, []);
 
   const handleModalClose = useCallback(() => {
-    if (!activeModelId) { setActiveModelId(null); return; }
-    const model = models.find((m) => m.id === activeModelId);
-    if (model && model.rank === null) {
-      const hasPreferred = model.variants.some((v) => v.reaction === "preferred");
-      if (hasPreferred) {
-        const maxRank = Math.max(0, ...models.filter((m) => m.rank !== null).map((m) => m.rank!));
-        const newRank = maxRank + 1;
-        setModels((prev) => prev.map((m) => m.id === activeModelId ? { ...m, rank: newRank } : m));
-        setSaving(true);
-        fetch(`/api/watches/${activeModelId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rank: newRank }),
-        }).catch(console.error).finally(() => setSaving(false));
-      }
-    }
     setActiveModelId(null);
-  }, [activeModelId, models]);
-
-  const handleRank = useCallback((modelId: string) => {
-    setModels((prev) => {
-      const maxRank = Math.max(0, ...prev.filter((m) => m.rank !== null).map((m) => m.rank!));
-      const newRank = maxRank + 1;
-      setSaving(true);
-      fetch(`/api/watches/${modelId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rank: newRank }),
-      }).catch(console.error).finally(() => setSaving(false));
-      return prev.map((m) => m.id === modelId ? { ...m, rank: newRank } : m);
-    });
-  }, []);
-
-  const handleUnrank = useCallback((modelId: string) => {
-    setModels((prev) => {
-      setSaving(true);
-      fetch(`/api/watches/${modelId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rank: null }),
-      }).catch(console.error).finally(() => setSaving(false));
-      // Renumber the remaining ranked watches
-      const remaining = prev
-        .filter((m) => m.rank !== null && m.id !== modelId)
-        .sort((a, b) => a.rank! - b.rank!)
-        .map((m, i) => ({ ...m, rank: i + 1 }));
-      fetch("/api/watches/rank", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: remaining.map((m) => m.id) }),
-      }).catch(console.error);
-      return prev.map((m) => {
-        if (m.id === modelId) return { ...m, rank: null };
-        const updated = remaining.find((r) => r.id === m.id);
-        return updated ?? m;
-      });
-    });
   }, []);
 
   const handleAddWatch = useCallback(async (
@@ -351,7 +327,7 @@ export function AppClient() {
           {ranked.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <p className="text-xs text-zinc-600" style={{ fontFamily: "var(--font-mono)" }}>
-                Rate a watch to move it here.
+                Mark a variant Preferred to move a watch here.
               </p>
             </div>
           ) : (
@@ -363,11 +339,32 @@ export function AppClient() {
                 onRate={() => setActiveModelId(model.id)}
                 onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
                 onMoveDown={i < ranked.length - 1 ? () => handleMoveDown(model.id) : undefined}
-                onUnrank={() => handleUnrank(model.id)}
               />
             ))
           )}
         </section>
+
+        {/* DISCARDED section */}
+        {discarded.length > 0 && (
+          <section className="mb-8">
+            <div className="px-4 pb-3 border-b border-zinc-800">
+              <span
+                className="text-[9px] tracking-[0.3em] uppercase text-zinc-600"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Discarded
+              </span>
+            </div>
+            {discarded.map((model) => (
+              <WatchRow
+                key={model.id}
+                model={model}
+                rank={null}
+                onRate={() => setActiveModelId(model.id)}
+              />
+            ))}
+          </section>
+        )}
 
         {/* UNRANKED section */}
         {unranked.length > 0 && (
@@ -386,7 +383,6 @@ export function AppClient() {
                 model={model}
                 rank={null}
                 onRate={() => setActiveModelId(model.id)}
-                onRank={() => handleRank(model.id)}
               />
             ))}
           </section>

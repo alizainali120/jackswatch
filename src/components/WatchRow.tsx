@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, ChevronUp, ChevronDown, Star, ListOrdered, X } from "lucide-react";
+import { ExternalLink, ChevronUp, ChevronDown, Star } from "lucide-react";
 import type { WatchModel, WatchVariant } from "@/types/watch";
 import { cn, getBrandGradient } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
           </span>
         )}
         {specs && <span className="text-zinc-600"> · {specs}</span>}
+        {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
         {isTopPick && <Star size={9} className="text-[#b8973a] fill-[#b8973a] flex-shrink-0 inline ml-1 align-middle" />}
       </p>
     </div>
@@ -46,11 +47,9 @@ interface WatchRowProps {
   onRate: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
-  onRank?: () => void;
-  onUnrank?: () => void;
 }
 
-export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, onUnrank }: WatchRowProps) {
+export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown }: WatchRowProps) {
 
   const gradient = getBrandGradient(model.brand);
 
@@ -74,7 +73,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, on
               <img
                 src={model.heroImage}
                 alt=""
-                className="w-full h-full object-cover object-center sm:object-top"
+                className="w-full h-full object-cover object-top"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -136,24 +135,6 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, onRank, on
                     <ChevronDown size={11} strokeWidth={1.5} />
                   </button>
                 </div>
-              )}
-              {onRank && (
-                <button
-                  onClick={onRank}
-                  title="Add to ranking"
-                  className="w-7 h-7 flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-                >
-                  <ListOrdered size={12} />
-                </button>
-              )}
-              {onUnrank && (
-                <button
-                  onClick={onUnrank}
-                  title="Remove from ranking"
-                  className="w-7 h-7 flex items-center justify-center border border-zinc-800 text-zinc-600 hover:border-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-                >
-                  <X size={12} />
-                </button>
               )}
               <button
                 onClick={onRate}

@@ -49,6 +49,7 @@ function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBloc
           </span>
         )}
         {specs && <span className="text-zinc-600"> · {specs}</span>}
+        {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
       </p>
 
       {/* Line 3: reaction buttons + top pick */}
