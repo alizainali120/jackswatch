@@ -167,16 +167,13 @@ export function SummaryClient() {
 
         {/* Footer — screen only */}
         {models.length > 0 && (
-          <div className="mt-10 pt-6 border-t border-zinc-800 flex items-center justify-between print:hidden">
-            <div>
-              <p className="text-[11px] uppercase tracking-widest text-zinc-500">Jack&apos;s Watch Guide</p>
-              <p
-                className="text-[11px] text-zinc-600 mt-0.5"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                alizainali.com/jackswatch
-              </p>
-            </div>
+          <div className="mt-10 pt-6 border-t border-zinc-800 flex justify-end print:hidden">
+            <p
+              className="text-[11px] text-zinc-600"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              alizainali.com/jackswatch
+            </p>
           </div>
         )}
       </div>

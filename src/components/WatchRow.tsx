@@ -96,7 +96,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
         <div className="flex-1 min-w-0 px-4 py-3 pb-4 flex flex-col gap-1.5">
 
           {/* Header: brand + name + reorder widget + action buttons */}
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <p
                 className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
@@ -112,7 +112,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {/* Rank reorder widget: ▲ rank# ▼ — always shown for ranked watches */}
               {rank !== null && (
                 <div className="flex flex-col items-center border border-zinc-700 flex-shrink-0">
