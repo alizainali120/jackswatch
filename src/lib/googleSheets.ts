@@ -91,7 +91,10 @@ async function findRowIndex(
 
 function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
   let reactionTags: string[] = [];
-  try { reactionTags = JSON.parse(row[6] || "[]"); } catch {}
+  try {
+    const parsed = JSON.parse(row[6] || "[]");
+    reactionTags = Array.isArray(parsed) ? parsed : [];
+  } catch {}
   return {
     id: row[0] ?? "",
     brand: row[1] ?? "",
