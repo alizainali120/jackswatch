@@ -1,56 +1,48 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Watch } from "@/types/watch";
-import { WatchGrid } from "@/components/WatchGrid";
-import { RankingView } from "@/components/RankingView";
-import { NotesPanel } from "@/components/NotesPanel";
-import { AddWatchModal } from "@/components/AddWatchModal";
-import { cn } from "@/lib/utils";
-import { WATCH_VARIANTS } from "@/lib/watchData";
-import {
-  LayoutGrid,
-  Trophy,
-  Plus,
-  Watch as WatchIcon,
-  Share2,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import type { WatchModel, WatchVariant, Reaction, GlobalPrefs } from "@/types/watch";
+import { PreferencesBar } from "@/components/PreferencesBar";
+import { ModelCard } from "@/components/ModelCard";
+import { RatingModal } from "@/components/RatingModal";
+import { Watch as WatchIcon, Trophy, Share2, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
-type MobileTab = "grid" | "rank";
+const DEFAULT_PREFS: GlobalPrefs = { condition: "either", strap: "any" };
+const PREFS_KEY = "jacks-watch-prefs";
 
 export function AppClient() {
-  const [watches, setWatches] = useState<Watch[]>([]);
-  const [mobileTab, setMobileTab] = useState<MobileTab>("grid");
-  const [notesPanelWatch, setNotesPanelWatch] = useState<Watch | null>(null);
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [models, setModels] = useState<WatchModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [prefs, setPrefs] = useState<GlobalPrefs>(DEFAULT_PREFS);
+  const [activeModel, setActiveModel] = useState<WatchModel | null>(null);
 
-  // Debounce timers per watch id — for notes saves
+  const variantTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const notesTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // ── Load from API ───────────────────────────────────────────────────────────
+  // Load prefs from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) setPrefs(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  // Persist prefs
+  const handlePrefsChange = useCallback((p: GlobalPrefs) => {
+    setPrefs(p);
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
+  }, []);
+
   useEffect(() => {
     fetch("/api/watches")
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
-        return r.json() as Promise<Watch[]>;
+        return r.json() as Promise<WatchModel[]>;
       })
-      .then((data) => {
-        const enriched = (data as Watch[]).map((w) => {
-          if (w.variants?.length) return w; // already has sheet-stored variants
-          const group = WATCH_VARIANTS[w.id];
-          return group
-            ? { ...w, name: group.name, variants: group.variants }
-            : w;
-        });
-        setWatches(enriched);
-        setLoading(false);
-      })
+      .then((data) => { setModels(data); setLoading(false); })
       .catch((err) => {
         console.error(err);
         setError("Couldn't reach the server. Check your connection.");
@@ -58,76 +50,75 @@ export function AppClient() {
       });
   }, []);
 
-  // ── Optimistic update + debounced API save ──────────────────────────────────
-  const updateWatch = useCallback((updated: Watch) => {
-    setWatches((prev) =>
-      prev.map((w) => (w.id === updated.id ? updated : w))
-    );
-    setNotesPanelWatch((prev) =>
-      prev?.id === updated.id ? updated : prev
-    );
+  // Optimistically update a variant reaction and debounce API save
+  const handleUpdateVariant = useCallback(
+    (modelId: string, variantId: string, reaction: Reaction | null, tryAgain: boolean) => {
+      setModels((prev) =>
+        prev.map((m) =>
+          m.id !== modelId
+            ? m
+            : { ...m, variants: m.variants.map((v) => v.id === variantId ? { ...v, reaction, tryAgain } : v) }
+        )
+      );
+      setActiveModel((prev) =>
+        prev?.id !== modelId
+          ? prev
+          : { ...prev, variants: prev.variants.map((v) => v.id === variantId ? { ...v, reaction, tryAgain } : v) }
+      );
 
-    // Debounce the API call 1.5 s after last change
-    const existing = notesTimers.current.get(updated.id);
-    if (existing) clearTimeout(existing);
+      const existing = variantTimers.current.get(variantId);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(async () => {
+        variantTimers.current.delete(variantId);
+        setSaving(true);
+        try {
+          await fetch(`/api/variants/${variantId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reaction, tryAgain }),
+          });
+        } catch (err) { console.error("Variant save failed:", err); }
+        finally { setSaving(false); }
+      }, 800);
+      variantTimers.current.set(variantId, timer);
+    },
+    []
+  );
 
-    const timer = setTimeout(async () => {
-      notesTimers.current.delete(updated.id);
-      setSaving(true);
-      try {
-        await fetch(`/api/watches/${updated.id}/notes`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tier: updated.tier ?? "",
-            fitScore: updated.notes?.fitScore ?? 0,
-            dialScore: updated.notes?.dialScore ?? 0,
-            overallNotes: updated.notes?.overallNotes ?? "",
-            variantPrefs: updated.notes?.variantPreferences ?? null,
-          }),
-        });
-      } catch (err) {
-        console.error("Notes save failed:", err);
-      } finally {
-        setSaving(false);
-      }
-    }, 1500);
+  // Optimistically update notes and debounce API save
+  const handleUpdateNotes = useCallback(
+    (modelId: string, notes: string) => {
+      setModels((prev) =>
+        prev.map((m) => m.id === modelId ? { ...m, notes } : m)
+      );
+      setActiveModel((prev) =>
+        prev?.id === modelId ? { ...prev, notes } : prev
+      );
 
-    notesTimers.current.set(updated.id, timer);
+      const existing = notesTimers.current.get(modelId);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(async () => {
+        notesTimers.current.delete(modelId);
+        setSaving(true);
+        try {
+          await fetch(`/api/watches/${modelId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ notes }),
+          });
+        } catch (err) { console.error("Notes save failed:", err); }
+        finally { setSaving(false); }
+      }, 1200);
+      notesTimers.current.set(modelId, timer);
+    },
+    []
+  );
+
+  const openModel = useCallback((model: WatchModel) => {
+    // Use latest version from state
+    setActiveModel(model);
   }, []);
 
-  // ── Ranking reorder — immediate API save ────────────────────────────────────
-  const reorderWatches = useCallback(async (reordered: Watch[]) => {
-    setWatches(reordered);
-    setSaving(true);
-    try {
-      await fetch("/api/watches/rank", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: reordered.map((w) => w.id) }),
-      });
-    } catch (err) {
-      console.error("Rank save failed:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, []);
-
-  // ── Add watch — persisted to sheet ─────────────────────────────────────────
-  const addWatch = useCallback(async (watch: Watch) => {
-    setWatches((prev) => [...prev, watch]);
-    try {
-      await fetch("/api/watches", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(watch),
-      });
-    } catch (err) {
-      console.error("Add watch failed:", err);
-    }
-  }, []);
-
-  // ── Render ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -139,11 +130,16 @@ export function AppClient() {
     );
   }
 
+  // For the modal, always pull fresh from models state
+  const activeModelFresh = activeModel
+    ? models.find((m) => m.id === activeModel.id) ?? activeModel
+    : null;
+
   return (
     <div className="min-h-screen bg-black text-[#FAF6EE]">
-      {/* ── Header ── */}
-      <header className="no-print sticky top-0 z-30 bg-black/95 backdrop-blur-sm border-b border-zinc-800/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-black/95 backdrop-blur-sm border-b border-zinc-800/50">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-full bg-[#b8973a]/15 border border-[#b8973a]/30 flex items-center justify-center">
               <WatchIcon size={11} className="text-[#b8973a]" />
@@ -154,36 +150,32 @@ export function AppClient() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Saving indicator */}
             {saving && (
-              <span className="hidden sm:flex items-center gap-1 text-[10px] text-zinc-600">
+              <span className="flex items-center gap-1 text-[10px] text-zinc-600">
                 <Loader2 size={10} className="animate-spin" />
-                Saving…
+                Saving
               </span>
             )}
-
             <Link
-              href="/share"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700"
+              href="/rank"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700"
             >
-              <Share2 size={12} />
-              Share
+              <Trophy size={12} />
+              <span className="hidden sm:inline">Ranking</span>
             </Link>
-            <button
-              onClick={() => setAddModalOpen(true)}
+            <Link
+              href="/summary"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#b8973a]/10 border border-[#b8973a]/20 text-[#b8973a] text-xs font-medium hover:bg-[#b8973a]/20 transition-colors"
             >
-              <Plus size={12} />
-              <span className="hidden sm:inline">Add Watch</span>
-              <span className="sm:hidden">Add</span>
-            </button>
+              <Share2 size={12} />
+              <span className="hidden sm:inline">Summary</span>
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* ── Error banner ── */}
       {error && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-4">
+        <div className="max-w-2xl mx-auto px-4 pt-4">
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
             <AlertCircle size={13} />
             {error}
@@ -191,128 +183,59 @@ export function AppClient() {
         </div>
       )}
 
-      {/* ── Mobile tab bar ── */}
-      <div className="no-print lg:hidden px-4 pt-4">
-        <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
-          <button
-            onClick={() => setMobileTab("grid")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all",
-              mobileTab === "grid"
-                ? "bg-zinc-700 text-zinc-100"
-                : "text-zinc-500 hover:text-zinc-300"
-            )}
-          >
-            <LayoutGrid size={12} />
-            Grid
-          </button>
-          <button
-            onClick={() => setMobileTab("rank")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all",
-              mobileTab === "rank"
-                ? "bg-zinc-700 text-zinc-100"
-                : "text-zinc-500 hover:text-zinc-300"
-            )}
-          >
-            <Trophy size={12} />
-            Rankings
-          </button>
-        </div>
-      </div>
-
-      {/* ── Hero ── */}
-      <div className="text-center pt-10 pb-8 border-b border-[#b8973a]/10">
+      {/* Hero */}
+      <div className="text-center pt-10 pb-6 border-b border-[#b8973a]/10">
         <h1
-          className="text-5xl sm:text-7xl font-light tracking-[0.25em] uppercase text-[#FAF6EE]"
+          className="text-5xl sm:text-6xl font-light tracking-[0.25em] uppercase text-[#FAF6EE]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           The Collection
         </h1>
         <p
-          className="mt-3 text-[10px] tracking-[0.25em] text-[#F5E6C8]/50"
+          className="mt-3 text-[10px] tracking-[0.25em] text-[#F5E6C8]/40"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          A curated selection.
+          Tap a watch to rate it
         </p>
       </div>
 
-      {/* ── Main layout ── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        <div className="lg:grid lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_300px] lg:gap-6 lg:items-start">
-          {/* Grid */}
-          <div className={cn(mobileTab === "grid" ? "block" : "hidden", "lg:block")}>
-            <WatchGrid
-              watches={watches}
-              onNotesClick={setNotesPanelWatch}
-              onUpdate={updateWatch}
-            />
+      {/* Preferences bar */}
+      <div className="max-w-2xl mx-auto px-4 py-4 border-b border-zinc-800/50">
+        <PreferencesBar prefs={prefs} onChange={handlePrefsChange} />
+      </div>
+
+      {/* Grid */}
+      <main className="max-w-2xl mx-auto px-4 py-6">
+        {models.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-zinc-600 text-sm">No watches yet.</p>
           </div>
-
-          {/* Sidebar */}
-          <div
-            className={cn(
-              mobileTab === "rank" ? "block" : "hidden",
-              "lg:block lg:sticky lg:top-20"
-            )}
-          >
-            <div className="hidden lg:flex items-center justify-between mb-3">
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500">
-                {watches.length} watches
-              </span>
-              <Link
-                href="/share"
-                className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-[#b8973a] transition-colors"
-              >
-                <Share2 size={10} />
-                Share &amp; Print
-              </Link>
-            </div>
-
-            <RankingView
-              watches={watches}
-              onReorder={reorderWatches}
-              onNotesClick={setNotesPanelWatch}
-            />
-
-            <div className="mt-4 lg:hidden">
-              <Link
-                href="/share"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-zinc-800 text-zinc-500 text-xs hover:border-zinc-700 hover:text-zinc-300 transition-all"
-              >
-                <Share2 size={12} />
-                Share &amp; Print Rankings
-              </Link>
-            </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {models.map((model) => (
+              <ModelCard
+                key={model.id}
+                model={model}
+                prefs={prefs}
+                onClick={() => openModel(model)}
+              />
+            ))}
           </div>
-        </div>
+        )}
       </main>
 
-      {/* ── Notes panel ── */}
-      {notesPanelWatch && (
-        <NotesPanel
-          watch={notesPanelWatch}
-          onClose={() => setNotesPanelWatch(null)}
-          onUpdate={updateWatch}
+      {/* Rating modal */}
+      {activeModelFresh && (
+        <RatingModal
+          model={activeModelFresh}
+          prefs={prefs}
+          onClose={() => setActiveModel(null)}
+          onUpdateVariant={(variantId: string, reaction: Reaction | null, tryAgain: boolean) =>
+            handleUpdateVariant(activeModelFresh.id, variantId, reaction, tryAgain)
+          }
+          onUpdateNotes={(notes: string) => handleUpdateNotes(activeModelFresh.id, notes)}
         />
       )}
-
-      {/* ── Add watch ── */}
-      {addModalOpen && (
-        <AddWatchModal
-          onClose={() => setAddModalOpen(false)}
-          onAdd={addWatch}
-          nextRank={watches.length + 1}
-        />
-      )}
-
-      {/* ── Floating final ranking button ── */}
-      <Link
-        href="/share"
-        className="no-print fixed bottom-6 right-6 z-20 px-5 py-3 bg-[#F5E6C8] text-black text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#C9A84C] transition-colors duration-200"
-      >
-        Final Ranking
-      </Link>
     </div>
   );
 }

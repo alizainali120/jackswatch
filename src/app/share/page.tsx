@@ -1,5 +1,5 @@
-import { ShareClient } from "@/components/ShareClient";
+import { redirect } from "next/navigation";
 
 export default function SharePage() {
-  return <ShareClient />;
+  redirect("/summary");
 }

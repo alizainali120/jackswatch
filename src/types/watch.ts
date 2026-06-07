@@ -1,38 +1,37 @@
-export type WatchTier = "must-have" | "consider" | "maybe" | "pass";
-
-export type VariantPreference = "prefer" | "pass";
-
-export interface WatchNotes {
-  fitScore: number;
-  dialScore: number;
-  overallNotes: string;
-  wristPhoto?: string;
-  variantPreferences?: Record<string, VariantPreference>;
-}
+export type Reaction = "love" | "consider" | "pass";
+export type Condition = "new" | "preowned";
+export type StrapType = "bracelet" | "leather" | "rubber" | "fabric";
+export type ConditionPref = "new" | "either" | "preowned";
+export type StrapPref = "bracelet" | "any" | "strap";
 
 export interface WatchVariant {
   id: string;
-  label: string;       // e.g. "No-Date" | "Date"
-  reference: string;   // e.g. "124060"
-  url: string;
-  dialColor: string;   // e.g. "Black"
-  bracelet: string;    // e.g. "Oyster"
-  movement: string;    // overrides Watch.movement for this variant
-  notable: string[];   // 2-3 key differentiators
+  modelId: string;
+  reference: string;
+  label: string;
+  size?: string;
+  dialColor: string;
+  strapType: StrapType;
+  strapColor: string;
+  condition: Condition;
+  priceRange?: string;
+  link?: string;
+  reaction: Reaction | null;
+  tryAgain: boolean;
 }
 
-export interface Watch {
+export interface WatchModel {
   id: string;
   brand: string;
   name: string;
-  reference: string;
-  caseSize: string;
-  movement: string;
-  powerReserve: string;
-  image: string;
+  heroImage: string;
   recommendation: string;
+  notes: string;
   rank: number;
-  tier?: WatchTier;
-  notes?: WatchNotes;
-  variants?: WatchVariant[];
+  variants: WatchVariant[];
+}
+
+export interface GlobalPrefs {
+  condition: ConditionPref;
+  strap: StrapPref;
 }

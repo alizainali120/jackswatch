@@ -1,24 +1,34 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { WatchTier } from "@/types/watch";
+import type { WatchModel } from "@/types/watch";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const TIER_LABELS: Record<WatchTier, string> = {
-  "must-have": "Must Have",
-  consider: "Strong Consider",
-  maybe: "Maybe",
-  pass: "Pass",
-};
+export function generateId(): string {
+  return crypto.randomUUID();
+}
 
-export const TIER_COLORS: Record<WatchTier, string> = {
-  "must-have": "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  consider: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  maybe: "bg-violet-500/15 text-violet-400 border-violet-500/30",
-  pass: "bg-red-500/15 text-red-400 border-red-500/30",
-};
+export function likenessScore(model: WatchModel): number | null {
+  const rated = model.variants.filter((v) => v.reaction !== null);
+  if (rated.length === 0) return null;
+  const loved = model.variants.filter((v) => v.reaction === "love").length;
+  return Math.round((loved / model.variants.length) * 100);
+}
+
+export function ratingLabel(model: WatchModel): string {
+  const loved = model.variants.filter((v) => v.reaction === "love").length;
+  const consider = model.variants.filter((v) => v.reaction === "consider").length;
+  const pass = model.variants.filter((v) => v.reaction === "pass").length;
+  const rated = loved + consider + pass;
+  if (rated === 0) return `${model.variants.length} variant${model.variants.length !== 1 ? "s" : ""}`;
+  const parts = [];
+  if (loved > 0) parts.push(`${loved} ❤️`);
+  if (consider > 0) parts.push(`${consider} 👍`);
+  if (pass > 0) parts.push(`${pass} ✕`);
+  return parts.join("  ·  ");
+}
 
 export const BRAND_GRADIENTS: Record<string, string> = {
   Rolex: "from-[#1a3a1a] to-[#0d1f0d]",
@@ -35,15 +45,9 @@ export function getBrandGradient(brand: string): string {
   return BRAND_GRADIENTS[brand] ?? BRAND_GRADIENTS.default;
 }
 
-export function generateId(): string {
-  return crypto.randomUUID();
-}
-
-export function scoreLabel(score: number): string {
-  if (score >= 9) return "Exceptional";
-  if (score >= 7) return "Great";
-  if (score >= 5) return "Good";
-  if (score >= 3) return "Fair";
-  if (score === 0) return "Unrated";
-  return "Poor";
-}
+export const STRAP_LABELS: Record<string, string> = {
+  bracelet: "Bracelet",
+  leather: "Leather",
+  rubber: "Rubber",
+  fabric: "Fabric",
+};

@@ -1,25 +1,19 @@
 import { google } from "googleapis";
-import { randomUUID } from "crypto";
-import { DEFAULT_WATCHES } from "@/lib/watchData";
+import { DEFAULT_MODELS } from "@/lib/watchData";
+import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────────────────────
 
 function getAuth() {
   const client_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const private_key = process.env.GOOGLE_PRIVATE_KEY;
-
   if (!client_email || !private_key) {
-    throw new Error(
-      "Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY"
-    );
+    throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_EMAIL or GOOGLE_PRIVATE_KEY");
   }
-
   return new google.auth.GoogleAuth({
     credentials: {
       client_email,
-      private_key: private_key
-        .replace(/^["']|["']$/g, "")
-        .replace(/\\n/g, "\n"),
+      private_key: private_key.replace(/^["']|["']$/g, "").replace(/\\n/g, "\n"),
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
@@ -36,290 +30,204 @@ async function client() {
 }
 
 // ── Sheet layout ──────────────────────────────────────────────────────────────
-// Tab name : "JacksWatch"
-// Columns  : A=id  B=rank  C=tier  D=fitScore  E=dialScore  F=overallNotes
-//            G=wristPhotoUrl  H=brand  I=name  J=reference  K=caseSize
-//            L=movement  M=powerReserve  N=image  O=recommendation
-//            P=variantPrefs (JSON)  Q=variantsJson (JSON)
-const TAB = "JacksWatch";
-const RANGE = `${TAB}!A:Q`;
-const HEADERS = [
-  "id", "rank", "tier", "fitScore", "dialScore", "overallNotes",
-  "wristPhotoUrl", "brand", "name", "reference", "caseSize",
-  "movement", "powerReserve", "image", "recommendation", "variantPrefs", "variantsJson",
+// Sheet "models"  : A=id  B=brand  C=name  D=heroImage  E=recommendation  F=notes  G=rank
+// Sheet "variants": A=id  B=modelId  C=reference  D=label  E=size  F=dialColor
+//                   G=strapType  H=strapColor  I=condition  J=priceRange  K=link
+//                   L=reaction  M=tryAgain
+
+const MODELS_TAB = "models";
+const VARIANTS_TAB = "variants";
+
+const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "recommendation", "notes", "rank"];
+const VARIANTS_HEADERS = [
+  "id", "modelId", "reference", "label", "size", "dialColor",
+  "strapType", "strapColor", "condition", "priceRange", "link", "reaction", "tryAgain",
 ];
-
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export interface SheetRow {
-  id: string;
-  rank: number;
-  tier: string;
-  fitScore: number;
-  dialScore: number;
-  overallNotes: string;
-  wristPhotoUrl: string;
-  brand: string;
-  name: string;
-  reference: string;
-  caseSize: string;
-  movement: string;
-  powerReserve: string;
-  image: string;
-  recommendation: string;
-  variantPrefs: string;
-  variantsJson: string;
-}
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-async function ensureHeaders(
-  sheets: Awaited<ReturnType<typeof client>>
+async function ensureTab(
+  sheets: Awaited<ReturnType<typeof client>>,
+  tabName: string,
+  headers: string[]
 ): Promise<void> {
+  // Ensure the tab exists — create it if not
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetId() });
+  const exists = meta.data.sheets?.some((s) => s.properties?.title === tabName);
+  if (!exists) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: sheetId(),
+      requestBody: {
+        requests: [{ addSheet: { properties: { title: tabName } } }],
+      },
+    });
+  }
+  // Ensure headers are written
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId(),
-    range: `${TAB}!A1:Q1`,
+    range: `${tabName}!A1`,
   });
-  const headerRow = res.data.values?.[0] ?? [];
-  if (headerRow[0] !== "id" || headerRow[16] !== "variantsJson") {
+  if (res.data.values?.[0]?.[0] !== "id") {
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId(),
-      range: `${TAB}!A1:Q1`,
+      range: `${tabName}!A1:${colLetter(headers.length)}1`,
       valueInputOption: "RAW",
-      requestBody: { values: [HEADERS] },
+      requestBody: { values: [headers] },
     });
   }
 }
 
+function colLetter(n: number): string {
+  return String.fromCharCode(64 + n);
+}
+
 async function findRowIndex(
   sheets: Awaited<ReturnType<typeof client>>,
+  tab: string,
   id: string
 ): Promise<number | null> {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId(),
-    range: `${TAB}!A:A`,
+    range: `${tab}!A:A`,
   });
   const col = res.data.values ?? [];
   const idx = col.findIndex((r) => r[0] === id);
-  return idx <= 0 ? null : idx + 1; // 1-based; 0 = header row → skip
+  return idx <= 0 ? null : idx + 1;
 }
 
-function rowToSheetRow(row: string[]): SheetRow {
+// ── Row parsers ───────────────────────────────────────────────────────────────
+
+function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
   return {
     id: row[0] ?? "",
-    rank: parseInt(row[1]) || 0,
-    tier: row[2] ?? "",
-    fitScore: parseInt(row[3]) || 0,
-    dialScore: parseInt(row[4]) || 0,
-    overallNotes: row[5] ?? "",
-    wristPhotoUrl: row[6] ?? "",
-    brand: row[7] ?? "",
-    name: row[8] ?? "",
-    reference: row[9] ?? "",
-    caseSize: row[10] ?? "",
-    movement: row[11] ?? "",
-    powerReserve: row[12] ?? "",
-    image: row[13] ?? "",
-    recommendation: row[14] ?? "",
-    variantPrefs: row[15] ?? "",
-    variantsJson: row[16] ?? "",
+    brand: row[1] ?? "",
+    name: row[2] ?? "",
+    heroImage: row[3] ?? "",
+    recommendation: row[4] ?? "",
+    notes: row[5] ?? "",
+    rank: parseInt(row[6]) || 99,
   };
 }
 
-function watchToRow(w: {
-  id: string; rank: number; tier?: string; fitScore?: number;
-  dialScore?: number; overallNotes?: string; wristPhotoUrl?: string;
-  brand: string; name: string; reference: string; caseSize: string;
-  movement: string; powerReserve: string; image: string; recommendation: string;
-  variantsJson?: string;
-}): string[] {
+function rowToVariant(row: string[]): WatchVariant {
+  return {
+    id: row[0] ?? "",
+    modelId: row[1] ?? "",
+    reference: row[2] ?? "",
+    label: row[3] ?? "",
+    size: row[4] || undefined,
+    dialColor: row[5] ?? "",
+    strapType: (row[6] as WatchVariant["strapType"]) || "bracelet",
+    strapColor: row[7] ?? "",
+    condition: (row[8] as WatchVariant["condition"]) || "new",
+    priceRange: row[9] || undefined,
+    link: row[10] || undefined,
+    reaction: (row[11] as Reaction) || null,
+    tryAgain: row[12] === "true",
+  };
+}
+
+function modelToRow(m: Omit<WatchModel, "variants">): string[] {
+  return [m.id, m.brand, m.name, m.heroImage, m.recommendation, m.notes, String(m.rank)];
+}
+
+function variantToRow(v: WatchVariant): string[] {
   return [
-    w.id, String(w.rank ?? ""), w.tier ?? "", String(w.fitScore ?? 0),
-    String(w.dialScore ?? 0), w.overallNotes ?? "", w.wristPhotoUrl ?? "",
-    w.brand, w.name, w.reference, w.caseSize, w.movement,
-    w.powerReserve, w.image, w.recommendation,
-    "",               // P = variantPrefs (managed separately by upsertNotes)
-    w.variantsJson ?? "",  // Q = variantsJson
+    v.id, v.modelId, v.reference, v.label, v.size ?? "",
+    v.dialColor, v.strapType, v.strapColor, v.condition,
+    v.priceRange ?? "", v.link ?? "", v.reaction ?? "", String(v.tryAgain),
   ];
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export async function getAllRows(): Promise<SheetRow[]> {
+export async function getAllModels(): Promise<WatchModel[]> {
   const sheets = await client();
-  await ensureHeaders(sheets);
+  await ensureTab(sheets, MODELS_TAB, MODELS_HEADERS);
+  await ensureTab(sheets, VARIANTS_TAB, VARIANTS_HEADERS);
 
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId(),
-    range: RANGE,
-  });
+  const [modelsRes, variantsRes] = await Promise.all([
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${MODELS_TAB}!A:G` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:M` }),
+  ]);
 
-  const rows = res.data.values ?? [];
+  const modelRows = (modelsRes.data.values ?? []).slice(1).filter((r) => r[0]);
+  const variantRows = (variantsRes.data.values ?? []).slice(1).filter((r) => r[0]);
 
-  if (rows.length <= 1) {
-    const seedRows = DEFAULT_WATCHES.map((w) =>
-      watchToRow({
-        id: w.id, rank: w.rank, tier: "", fitScore: 0,
-        dialScore: 0, overallNotes: "", wristPhotoUrl: "",
-        brand: w.brand, name: w.name, reference: w.reference,
-        caseSize: w.caseSize, movement: w.movement,
-        powerReserve: w.powerReserve, image: w.image,
-        recommendation: w.recommendation,
-      })
-    );
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId(),
-      range: RANGE,
-      valueInputOption: "RAW",
-      requestBody: { values: seedRows },
-    });
-    return seedRows.map(rowToSheetRow);
-  }
-
-  const dataRows = rows.slice(1);
-  const idWrites: { range: string; values: string[][] }[] = [];
-
-  const processed = dataRows.map((row, i) => {
-    const sheetRow = rowToSheetRow(row);
-    // Auto-assign id for rows added directly in the Sheet (has a name but no id)
-    if (!sheetRow.id && sheetRow.name) {
-      sheetRow.id = `watch-${randomUUID().slice(0, 8)}`;
-      idWrites.push({ range: `${TAB}!A${i + 2}`, values: [[sheetRow.id]] });
-    }
-    return sheetRow;
-  });
-
-  if (idWrites.length > 0) {
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: sheetId(),
-      requestBody: { valueInputOption: "RAW", data: idWrites },
-    });
-  }
-
-  return processed.filter((r) => r.id !== "" && r.name !== "");
-}
-
-export async function upsertWatch(watch: {
-  id: string; rank: number; brand: string; name: string; reference: string;
-  caseSize: string; movement: string; powerReserve: string;
-  image: string; recommendation: string; variantsJson?: string;
-}): Promise<void> {
-  const sheets = await client();
-  await ensureHeaders(sheets);
-  const rowIdx = await findRowIndex(sheets, watch.id);
-
-  if (rowIdx === null) {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId(),
-      range: RANGE,
-      valueInputOption: "RAW",
-      requestBody: { values: [watchToRow({ ...watch, tier: "", fitScore: 0, dialScore: 0, overallNotes: "", wristPhotoUrl: "" })] },
-    });
-  } else {
-    // Update rank (B), catalog fields (H:O), and variantsJson (Q) only
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: sheetId(),
-      requestBody: {
+  // Seed if empty
+  if (modelRows.length === 0) {
+    const allModelRows = DEFAULT_MODELS.map((m) => modelToRow(m));
+    const allVariantRows = DEFAULT_MODELS.flatMap((m) => m.variants.map(variantToRow));
+    await Promise.all([
+      sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId(),
+        range: `${MODELS_TAB}!A:G`,
         valueInputOption: "RAW",
-        data: [
-          { range: `${TAB}!B${rowIdx}`, values: [[String(watch.rank)]] },
-          {
-            range: `${TAB}!H${rowIdx}:O${rowIdx}`,
-            values: [[
-              watch.brand, watch.name, watch.reference, watch.caseSize,
-              watch.movement, watch.powerReserve, watch.image, watch.recommendation,
-            ]],
-          },
-          { range: `${TAB}!Q${rowIdx}`, values: [[watch.variantsJson ?? ""]] },
-        ],
-      },
-    });
+        requestBody: { values: allModelRows },
+      }),
+      sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId(),
+        range: `${VARIANTS_TAB}!A:M`,
+        valueInputOption: "RAW",
+        requestBody: { values: allVariantRows },
+      }),
+    ]);
+    return DEFAULT_MODELS;
   }
+
+  const models = modelRows.map(rowToModel);
+  const variants = variantRows.map(rowToVariant);
+
+  return models
+    .map((m) => ({ ...m, variants: variants.filter((v) => v.modelId === m.id) }))
+    .sort((a, b) => a.rank - b.rank);
 }
 
-export async function upsertNotes(
-  id: string,
-  data: {
-    tier?: string;
-    fitScore: number;
-    dialScore: number;
-    overallNotes: string;
-    variantPrefs?: string;
-  }
-): Promise<void> {
+export async function updateModelNotes(id: string, notes: string): Promise<void> {
   const sheets = await client();
-  await ensureHeaders(sheets);
-  const rowIdx = await findRowIndex(sheets, id);
-
-  if (rowIdx === null) return; // watch must exist first
-
-  await sheets.spreadsheets.values.batchUpdate({
-    spreadsheetId: sheetId(),
-    requestBody: {
-      valueInputOption: "RAW",
-      data: [
-        // C:F — tier, scores, notes
-        {
-          range: `${TAB}!C${rowIdx}:F${rowIdx}`,
-          values: [[data.tier ?? "", data.fitScore, data.dialScore, data.overallNotes]],
-        },
-        // P — variant preferences JSON
-        {
-          range: `${TAB}!P${rowIdx}`,
-          values: [[data.variantPrefs ?? ""]],
-        },
-      ],
-    },
-  });
-}
-
-export async function upsertWristPhotoUrl(
-  id: string,
-  url: string
-): Promise<void> {
-  const sheets = await client();
-  await ensureHeaders(sheets);
-  const rowIdx = await findRowIndex(sheets, id);
-
-  if (rowIdx === null) return; // watch must exist first
-
+  const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
+  if (rowIdx === null) return;
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId(),
-    range: `${TAB}!G${rowIdx}`,
+    range: `${MODELS_TAB}!F${rowIdx}`,
     valueInputOption: "RAW",
-    requestBody: { values: [[url]] },
+    requestBody: { values: [[notes]] },
   });
 }
 
-export async function updateRanks(
-  ranks: { id: string; rank: number }[]
+export async function updateVariantReaction(
+  id: string,
+  reaction: Reaction | null,
+  tryAgain: boolean
 ): Promise<void> {
   const sheets = await client();
-  await ensureHeaders(sheets);
+  const rowIdx = await findRowIndex(sheets, VARIANTS_TAB, id);
+  if (rowIdx === null) return;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${VARIANTS_TAB}!L${rowIdx}:M${rowIdx}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[reaction ?? "", String(tryAgain)]] },
+  });
+}
 
+export async function saveModelRanks(ranks: { id: string; rank: number }[]): Promise<void> {
+  const sheets = await client();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId(),
-    range: `${TAB}!A:A`,
+    range: `${MODELS_TAB}!A:A`,
   });
   const col = res.data.values ?? [];
-
   const batchData: { range: string; values: string[][] }[] = [];
-
   for (const { id, rank } of ranks) {
     const idx = col.findIndex((r) => r[0] === id);
     if (idx > 0) {
-      batchData.push({
-        range: `${TAB}!B${idx + 1}`,
-        values: [[String(rank)]],
-      });
+      batchData.push({ range: `${MODELS_TAB}!G${idx + 1}`, values: [[String(rank)]] });
     }
   }
-
-  if (batchData.length > 0) {
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: sheetId(),
-      requestBody: { valueInputOption: "RAW", data: batchData },
-    });
-  }
+  if (batchData.length === 0) return;
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: sheetId(),
+    requestBody: { valueInputOption: "RAW", data: batchData },
+  });
 }
