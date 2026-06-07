@@ -2,19 +2,13 @@
 
 import { ExternalLink, ChevronUp, ChevronDown, Star } from "lucide-react";
 import type { WatchModel, WatchVariant } from "@/types/watch";
-import { cn, getBrandGradient, STRAP_LABELS } from "@/lib/utils";
+import { cn, getBrandGradient } from "@/lib/utils";
 
 function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick: boolean }) {
   const isPassed = variant.reaction === "pass";
   const isPreferred = variant.reaction === "preferred";
 
-  const specs = [
-    variant.size,
-    `${variant.dialColor} Dial`,
-    STRAP_LABELS[variant.strapType],
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const specs = variant.label || "";
 
   return (
     <div className={cn("transition-opacity", isPassed && "opacity-35", isPreferred && "bg-[#F5E6C8]/5")}>
