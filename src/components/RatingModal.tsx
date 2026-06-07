@@ -127,13 +127,6 @@ export function RatingModal({
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const preferredCount = model.variants.filter((v) => v.reaction === "preferred").length;
-  const passedCount = model.variants.filter((v) => v.reaction === "pass").length;
-
-  const tallyParts: string[] = [];
-  if (preferredCount > 0) tallyParts.push(`${preferredCount} preferred`);
-  if (passedCount > 0) tallyParts.push(`${passedCount} passed`);
-
   function handleNotesBlur() {
     if (localNotes !== model.notes) {
       onUpdateNotes(localNotes);
@@ -236,13 +229,7 @@ export function RatingModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-4 px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0">
-          <p
-            className="text-[10px] text-zinc-500"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            {tallyParts.length > 0 ? tallyParts.join(" · ") : "No ratings yet"}
-          </p>
+        <div className="flex items-center justify-end px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0">
           <button
             onClick={onClose}
             className="bg-[#F5E6C8] text-black px-6 py-2 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors"
