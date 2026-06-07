@@ -143,9 +143,8 @@ export function AppClient() {
       if (reaction === "preferred") {
         const model = updatedModels.find((m) => m.id === modelId);
         if (model && model.rank === null) {
-          const rankedModels = updatedModels.filter((m) => m.id !== modelId && m.variants.some((v) => v.reaction === "preferred"));
-          const maxRank = Math.max(0, ...rankedModels.map((m) => m.rank ?? 0));
-          const newRank = Math.max(maxRank + 1, rankedModels.length + 1);
+          const maxRank = Math.max(0, ...updatedModels.filter((m) => m.id !== modelId).map((m) => m.rank ?? 0));
+          const newRank = maxRank + 1;
           setSaving(true);
           fetch(`/api/watches/${modelId}`, {
             method: "PUT",
