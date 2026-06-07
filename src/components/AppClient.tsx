@@ -1,40 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { WatchModel, WatchVariant, Reaction, GlobalPrefs } from "@/types/watch";
-import { PreferencesBar } from "@/components/PreferencesBar";
+import type { WatchModel, Reaction } from "@/types/watch";
 import { ModelCard } from "@/components/ModelCard";
 import { RatingModal } from "@/components/RatingModal";
 import { Watch as WatchIcon, Trophy, Share2, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
-
-const DEFAULT_PREFS: GlobalPrefs = { condition: "either", strap: "any" };
-const PREFS_KEY = "jacks-watch-prefs";
 
 export function AppClient() {
   const [models, setModels] = useState<WatchModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [prefs, setPrefs] = useState<GlobalPrefs>(DEFAULT_PREFS);
   const [activeModel, setActiveModel] = useState<WatchModel | null>(null);
 
   const variantTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const notesTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-
-  // Load prefs from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(PREFS_KEY);
-      if (stored) setPrefs(JSON.parse(stored));
-    } catch {}
-  }, []);
-
-  // Persist prefs
-  const handlePrefsChange = useCallback((p: GlobalPrefs) => {
-    setPrefs(p);
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
-  }, []);
 
   useEffect(() => {
     fetch("/api/watches")
@@ -50,7 +30,6 @@ export function AppClient() {
       });
   }, []);
 
-  // Optimistically update a variant reaction and debounce API save
   const handleUpdateVariant = useCallback(
     (modelId: string, variantId: string, reaction: Reaction | null, tryAgain: boolean) => {
       setModels((prev) =>
@@ -85,38 +64,32 @@ export function AppClient() {
     []
   );
 
-  // Optimistically update notes and debounce API save
-  const handleUpdateNotes = useCallback(
-    (modelId: string, notes: string) => {
-      setModels((prev) =>
-        prev.map((m) => m.id === modelId ? { ...m, notes } : m)
-      );
-      setActiveModel((prev) =>
-        prev?.id === modelId ? { ...prev, notes } : prev
-      );
+  const handleUpdateNotes = useCallback(async (modelId: string, notes: string) => {
+    setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, notes } : m));
+    setActiveModel((prev) => prev?.id === modelId ? { ...prev, notes } : prev);
+    setSaving(true);
+    try {
+      await fetch(`/api/watches/${modelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+    } catch (err) { console.error("Notes save failed:", err); }
+    finally { setSaving(false); }
+  }, []);
 
-      const existing = notesTimers.current.get(modelId);
-      if (existing) clearTimeout(existing);
-      const timer = setTimeout(async () => {
-        notesTimers.current.delete(modelId);
-        setSaving(true);
-        try {
-          await fetch(`/api/watches/${modelId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ notes }),
-          });
-        } catch (err) { console.error("Notes save failed:", err); }
-        finally { setSaving(false); }
-      }, 1200);
-      notesTimers.current.set(modelId, timer);
-    },
-    []
-  );
-
-  const openModel = useCallback((model: WatchModel) => {
-    // Use latest version from state
-    setActiveModel(model);
+  const handleUpdateReactionTags = useCallback(async (modelId: string, reactionTags: string[]) => {
+    setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, reactionTags } : m));
+    setActiveModel((prev) => prev?.id === modelId ? { ...prev, reactionTags } : prev);
+    setSaving(true);
+    try {
+      await fetch(`/api/watches/${modelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactionTags }),
+      });
+    } catch (err) { console.error("Tags save failed:", err); }
+    finally { setSaving(false); }
   }, []);
 
   if (loading) {
@@ -130,7 +103,6 @@ export function AppClient() {
     );
   }
 
-  // For the modal, always pull fresh from models state
   const activeModelFresh = activeModel
     ? models.find((m) => m.id === activeModel.id) ?? activeModel
     : null;
@@ -184,7 +156,7 @@ export function AppClient() {
       )}
 
       {/* Hero */}
-      <div className="text-center pt-10 pb-6 border-b border-[#b8973a]/10">
+      <div className="text-center pt-10 pb-8 border-b border-[#b8973a]/10">
         <h1
           className="text-5xl sm:text-6xl font-light tracking-[0.25em] uppercase text-[#FAF6EE]"
           style={{ fontFamily: "var(--font-display)" }}
@@ -199,11 +171,6 @@ export function AppClient() {
         </p>
       </div>
 
-      {/* Preferences bar */}
-      <div className="max-w-2xl mx-auto px-4 py-4 border-b border-zinc-800/50">
-        <PreferencesBar prefs={prefs} onChange={handlePrefsChange} />
-      </div>
-
       {/* Grid */}
       <main className="max-w-2xl mx-auto px-4 py-6">
         {models.length === 0 ? (
@@ -216,8 +183,7 @@ export function AppClient() {
               <ModelCard
                 key={model.id}
                 model={model}
-                prefs={prefs}
-                onClick={() => openModel(model)}
+                onClick={() => setActiveModel(model)}
               />
             ))}
           </div>
@@ -228,12 +194,12 @@ export function AppClient() {
       {activeModelFresh && (
         <RatingModal
           model={activeModelFresh}
-          prefs={prefs}
           onClose={() => setActiveModel(null)}
           onUpdateVariant={(variantId: string, reaction: Reaction | null, tryAgain: boolean) =>
             handleUpdateVariant(activeModelFresh.id, variantId, reaction, tryAgain)
           }
           onUpdateNotes={(notes: string) => handleUpdateNotes(activeModelFresh.id, notes)}
+          onUpdateReactionTags={(tags: string[]) => handleUpdateReactionTags(activeModelFresh.id, tags)}
         />
       )}
     </div>

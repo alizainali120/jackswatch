@@ -30,15 +30,16 @@ async function client() {
 }
 
 // ── Sheet layout ──────────────────────────────────────────────────────────────
-// Sheet "models"  : A=id  B=brand  C=name  D=heroImage  E=recommendation  F=notes  G=rank
+// Sheet "models"  : A=id  B=brand  C=name  D=heroImage  E=notes  F=rank  G=reactionTags(JSON)
 // Sheet "variants": A=id  B=modelId  C=reference  D=label  E=size  F=dialColor
 //                   G=strapType  H=strapColor  I=condition  J=priceRange  K=link
 //                   L=reaction  M=tryAgain
+// Note: if reseeding, clear the "models" tab rows to pick up the new column layout.
 
 const MODELS_TAB = "models";
 const VARIANTS_TAB = "variants";
 
-const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "recommendation", "notes", "rank"];
+const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "notes", "rank", "reactionTags"];
 const VARIANTS_HEADERS = [
   "id", "modelId", "reference", "label", "size", "dialColor",
   "strapType", "strapColor", "condition", "priceRange", "link", "reaction", "tryAgain",
@@ -98,14 +99,16 @@ async function findRowIndex(
 // ── Row parsers ───────────────────────────────────────────────────────────────
 
 function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
+  let reactionTags: string[] = [];
+  try { reactionTags = JSON.parse(row[6] || "[]"); } catch {}
   return {
     id: row[0] ?? "",
     brand: row[1] ?? "",
     name: row[2] ?? "",
     heroImage: row[3] ?? "",
-    recommendation: row[4] ?? "",
-    notes: row[5] ?? "",
-    rank: parseInt(row[6]) || 99,
+    notes: row[4] ?? "",
+    rank: parseInt(row[5]) || 99,
+    reactionTags,
   };
 }
 
@@ -128,7 +131,7 @@ function rowToVariant(row: string[]): WatchVariant {
 }
 
 function modelToRow(m: Omit<WatchModel, "variants">): string[] {
-  return [m.id, m.brand, m.name, m.heroImage, m.recommendation, m.notes, String(m.rank)];
+  return [m.id, m.brand, m.name, m.heroImage, m.notes, String(m.rank), JSON.stringify(m.reactionTags ?? [])];
 }
 
 function variantToRow(v: WatchVariant): string[] {
@@ -189,9 +192,21 @@ export async function updateModelNotes(id: string, notes: string): Promise<void>
   if (rowIdx === null) return;
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId(),
-    range: `${MODELS_TAB}!F${rowIdx}`,
+    range: `${MODELS_TAB}!E${rowIdx}`,
     valueInputOption: "RAW",
     requestBody: { values: [[notes]] },
+  });
+}
+
+export async function updateModelReactionTags(id: string, tags: string[]): Promise<void> {
+  const sheets = await client();
+  const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
+  if (rowIdx === null) return;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${MODELS_TAB}!G${rowIdx}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[JSON.stringify(tags)]] },
   });
 }
 
@@ -222,7 +237,7 @@ export async function saveModelRanks(ranks: { id: string; rank: number }[]): Pro
   for (const { id, rank } of ranks) {
     const idx = col.findIndex((r) => r[0] === id);
     if (idx > 0) {
-      batchData.push({ range: `${MODELS_TAB}!G${idx + 1}`, values: [[String(rank)]] });
+      batchData.push({ range: `${MODELS_TAB}!F${idx + 1}`, values: [[String(rank)]] });
     }
   }
   if (batchData.length === 0) return;

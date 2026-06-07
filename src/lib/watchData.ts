@@ -6,8 +6,8 @@ export const DEFAULT_MODELS: WatchModel[] = [
     brand: "Rolex",
     name: "Submariner",
     heroImage: "",
-    recommendation: "The most recognizable dive watch ever made. Two personalities — the clean no-date and the practical date. Both wear identically on the wrist. The difference is philosophical.",
-    notes: "",
+    notes: "The most recognizable dive watch ever made. Two personalities — the clean no-date and the practical date. Both wear identically on the wrist. The difference is philosophical.",
+    reactionTags: [],
     rank: 1,
     variants: [
       {
@@ -62,8 +62,8 @@ export const DEFAULT_MODELS: WatchModel[] = [
     brand: "Omega",
     name: "Seamaster Aqua Terra",
     heroImage: "",
-    recommendation: "Omega's most versatile sports watch — dressier than the Diver but still substantial. The teak-pattern dial is genuinely beautiful in person. METAS Master Chronometer certified.",
-    notes: "",
+    notes: "Omega's most versatile sports watch — dressier than the Diver but still substantial. The teak-pattern dial is genuinely beautiful in person. METAS Master Chronometer certified.",
+    reactionTags: [],
     rank: 2,
     variants: [
       {
@@ -118,8 +118,8 @@ export const DEFAULT_MODELS: WatchModel[] = [
     brand: "Tudor",
     name: "Black Bay 58",
     heroImage: "",
-    recommendation: "The smartest buy in the lineup. 39mm has vintage proportions that actually work on modern wrists. In-house movement with Rolex DNA. Hard to argue with the value.",
-    notes: "",
+    notes: "The smartest buy in the lineup. 39mm has vintage proportions that actually work on modern wrists. In-house movement with Rolex DNA. Hard to argue with the value.",
+    reactionTags: [],
     rank: 3,
     variants: [
       {
@@ -174,8 +174,8 @@ export const DEFAULT_MODELS: WatchModel[] = [
     brand: "IWC",
     name: "Pilot's Watch Mark XX",
     heroImage: "",
-    recommendation: "Clean, functional, understated. The longest power reserve in this lineup. A watch for people who don't need anyone to know what they're wearing.",
-    notes: "",
+    notes: "Clean, functional, understated. The longest power reserve in this lineup. A watch for people who don't need anyone to know what they're wearing.",
+    reactionTags: [],
     rank: 4,
     variants: [
       {
@@ -215,8 +215,8 @@ export const DEFAULT_MODELS: WatchModel[] = [
     brand: "Cartier",
     name: "Santos de Cartier",
     heroImage: "",
-    recommendation: "The wildcard. A square case in a world of round ones — 120 years old and still looks modern. If Jack wants to stand out from every other Rolex on the room, this is the move.",
-    notes: "",
+    notes: "The wildcard. A square case in a world of round ones — 120 years old and still looks modern. If Jack wants to stand out from every other Rolex in the room, this is the move.",
+    reactionTags: [],
     rank: 5,
     variants: [
       {

@@ -1,16 +1,16 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
-import type { WatchModel, WatchVariant, Reaction, GlobalPrefs } from "@/types/watch";
+import { useState } from "react";
+import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 import { cn, getBrandGradient, STRAP_LABELS } from "@/lib/utils";
 import { X, ExternalLink, RotateCcw } from "lucide-react";
 
 interface Props {
   model: WatchModel;
-  prefs: GlobalPrefs;
   onClose: () => void;
   onUpdateVariant: (variantId: string, reaction: Reaction | null, tryAgain: boolean) => void;
   onUpdateNotes: (notes: string) => void;
+  onUpdateReactionTags: (tags: string[]) => void;
 }
 
 const REACTIONS: { value: Reaction; emoji: string; label: string }[] = [
@@ -19,17 +19,10 @@ const REACTIONS: { value: Reaction; emoji: string; label: string }[] = [
   { value: "pass",     emoji: "✕",   label: "Pass"     },
 ];
 
-function variantMatchesPref(v: WatchVariant, prefs: GlobalPrefs): boolean {
-  const condOk =
-    prefs.condition === "either" ||
-    (prefs.condition === "new" && v.condition === "new") ||
-    (prefs.condition === "preowned" && v.condition === "preowned");
-  const strapOk =
-    prefs.strap === "any" ||
-    (prefs.strap === "bracelet" && v.strapType === "bracelet") ||
-    (prefs.strap === "strap" && v.strapType !== "bracelet");
-  return condOk && strapOk;
-}
+const QUICK_TAGS = [
+  "Sporty", "Dressy", "Versatile", "Everyday", "Bold", "Understated",
+  "Comfortable", "Heavy", "Wears large", "Wears small", "Clean dial", "Statement",
+];
 
 function hasMultipleSizes(model: WatchModel): boolean {
   const sizes = new Set(model.variants.map((v) => v.size).filter(Boolean));
@@ -39,13 +32,11 @@ function hasMultipleSizes(model: WatchModel): boolean {
 function VariantRow({
   variant,
   showSize,
-  matchesPref,
   onReact,
   onToggleTryAgain,
 }: {
   variant: WatchVariant;
   showSize: boolean;
-  matchesPref: boolean;
   onReact: (r: Reaction | null) => void;
   onToggleTryAgain: () => void;
 }) {
@@ -65,11 +56,9 @@ function VariantRow({
           ? "border-amber-800/40 bg-amber-950/15"
           : variant.reaction === "pass"
           ? "border-zinc-800 bg-zinc-950/40 opacity-60"
-          : "border-zinc-800 bg-zinc-950/30",
-        !matchesPref && "opacity-70"
+          : "border-zinc-800 bg-zinc-950/30"
       )}
     >
-      {/* Top row: label, ref link, condition, price, pref mismatch */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -89,9 +78,6 @@ function VariantRow({
             >
               {variant.condition === "new" ? "NEW" : "PRE-OWNED"}
             </span>
-            {!matchesPref && (
-              <span className="text-[9px] text-zinc-600 italic">not your pref</span>
-            )}
           </div>
 
           <div className="flex items-center gap-2 mt-0.5">
@@ -128,7 +114,6 @@ function VariantRow({
         </div>
       </div>
 
-      {/* Reaction buttons + try again */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           {REACTIONS.map(({ value, emoji, label }) => (
@@ -153,7 +138,6 @@ function VariantRow({
           ))}
         </div>
 
-        {/* Try again */}
         <button
           onClick={onToggleTryAgain}
           title="Try again"
@@ -172,9 +156,8 @@ function VariantRow({
   );
 }
 
-export function RatingModal({ model, prefs, onClose, onUpdateVariant, onUpdateNotes }: Props) {
+export function RatingModal({ model, onClose, onUpdateVariant, onUpdateNotes, onUpdateReactionTags }: Props) {
   const [notes, setNotes] = useState(model.notes);
-  const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showSize = hasMultipleSizes(model);
 
   const loved = model.variants.filter((v) => v.reaction === "love").length;
@@ -188,24 +171,16 @@ export function RatingModal({ model, prefs, onClose, onUpdateVariant, onUpdateNo
     passed > 0 && `${passed} passed`,
   ].filter(Boolean);
 
-  const handleNotesChange = useCallback(
-    (value: string) => {
-      setNotes(value);
-      if (notesTimer.current) clearTimeout(notesTimer.current);
-      notesTimer.current = setTimeout(() => onUpdateNotes(value), 1200);
-    },
-    [onUpdateNotes]
-  );
+  function toggleTag(tag: string) {
+    const current = model.reactionTags ?? [];
+    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
+    onUpdateReactionTags(next);
+  }
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
       <div className="fixed z-50 inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-6">
         <div className="relative w-full sm:max-w-xl bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden">
 
@@ -250,13 +225,6 @@ export function RatingModal({ model, prefs, onClose, onUpdateVariant, onUpdateNo
           <div className="flex-1 overflow-y-auto">
             <div className="px-5 py-5 space-y-6">
 
-              {/* Recommendation */}
-              {model.recommendation && (
-                <p className="text-[11px] text-zinc-500 italic leading-relaxed border-l-2 border-[#b8973a]/30 pl-3">
-                  {model.recommendation}
-                </p>
-              )}
-
               {/* Variants */}
               <div className="space-y-2">
                 <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">
@@ -267,23 +235,45 @@ export function RatingModal({ model, prefs, onClose, onUpdateVariant, onUpdateNo
                     key={v.id}
                     variant={v}
                     showSize={showSize}
-                    matchesPref={variantMatchesPref(v, prefs)}
                     onReact={(r) => onUpdateVariant(v.id, r, v.tryAgain)}
                     onToggleTryAgain={() => onUpdateVariant(v.id, v.reaction, !v.tryAgain)}
                   />
                 ))}
               </div>
 
+              {/* Quick-tap reaction tags */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2.5">Quick tags</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_TAGS.map((tag) => {
+                    const active = (model.reactionTags ?? []).includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-xl border text-[11px] font-medium transition-all",
+                          active
+                            ? "bg-[#b8973a]/15 border-[#b8973a]/40 text-[#b8973a]"
+                            : "border-zinc-800 text-zinc-600 hover:border-zinc-700 hover:text-zinc-400"
+                        )}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Notes */}
-              <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-widest text-zinc-600">
-                  Your thoughts
-                </p>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">Notes</p>
                 <textarea
                   value={notes}
-                  onChange={(e) => handleNotesChange(e.target.value)}
-                  placeholder="How did it feel? Dial too busy? Loved the weight? Any hesitation?"
-                  className="w-full bg-zinc-950 border-0 border-b border-[#b8973a]/20 px-0 py-2 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-[#b8973a]/40 transition-colors leading-relaxed resize-none"
+                  onChange={(e) => setNotes(e.target.value)}
+                  onBlur={(e) => onUpdateNotes(e.target.value)}
+                  placeholder="Add context, heritage, or your thoughts..."
+                  className="w-full bg-transparent border-0 border-b border-[#b8973a]/20 px-0 py-2 text-sm text-[#FAF6EE] placeholder-zinc-700 focus:outline-none focus:border-[#b8973a]/50 transition-colors leading-relaxed resize-none"
                   rows={3}
                 />
               </div>

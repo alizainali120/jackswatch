@@ -1,32 +1,18 @@
 "use client";
 
-import type { WatchModel, GlobalPrefs } from "@/types/watch";
+import type { WatchModel } from "@/types/watch";
 import { cn, getBrandGradient, likenessScore, ratingLabel } from "@/lib/utils";
 
 interface Props {
   model: WatchModel;
-  prefs: GlobalPrefs;
   onClick: () => void;
 }
 
-export function ModelCard({ model, prefs, onClick }: Props) {
+export function ModelCard({ model, onClick }: Props) {
   const score = likenessScore(model);
   const loved = model.variants.filter((v) => v.reaction === "love").length;
   const totalRated = model.variants.filter((v) => v.reaction !== null).length;
   const hasRatings = totalRated > 0;
-
-  // Check if any variant matches prefs (for a subtle "good match" indicator)
-  const prefMatchCount = model.variants.filter((v) => {
-    const condOk =
-      prefs.condition === "either" ||
-      (prefs.condition === "new" && v.condition === "new") ||
-      (prefs.condition === "preowned" && v.condition === "preowned");
-    const strapOk =
-      prefs.strap === "any" ||
-      (prefs.strap === "bracelet" && v.strapType === "bracelet") ||
-      (prefs.strap === "strap" && v.strapType !== "bracelet");
-    return condOk && strapOk;
-  }).length;
 
   return (
     <button
@@ -57,13 +43,6 @@ export function ModelCard({ model, prefs, onClick }: Props) {
         {score !== null && (
           <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm">
             <span className="text-[11px] font-semibold text-[#b8973a]">{score}%</span>
-          </div>
-        )}
-
-        {/* Pref match indicator */}
-        {prefMatchCount > 0 && prefMatchCount < model.variants.length && (
-          <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-full bg-black/50 text-[9px] text-zinc-400">
-            {prefMatchCount} match your prefs
           </div>
         )}
       </div>

@@ -25,8 +25,8 @@ export interface WatchModel {
   brand: string;
   name: string;
   heroImage: string;
-  recommendation: string;
   notes: string;
+  reactionTags: string[];
   rank: number;
   variants: WatchVariant[];
 }
