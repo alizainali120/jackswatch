@@ -18,30 +18,29 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
 
   return (
     <div className={cn("transition-opacity", isPassed && "opacity-35", isPreferred && "bg-[#F5E6C8]/5")}>
-      {/* Line 1: ref + link + badge + price */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <span
-          className={cn("text-[10px] text-zinc-400", isPassed && "line-through")}
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          {variant.reference}
-        </span>
-        {variant.link && (
+      {/* Single line: ref (linked) · specs */}
+      <p className="text-[10px]" style={{ fontFamily: "var(--font-mono)" }}>
+        {variant.link ? (
           <a
             href={variant.link}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="text-zinc-600 hover:text-[#b8973a] transition-colors"
+            className={cn(
+              "inline-flex items-center gap-1 text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
+              isPassed && "line-through"
+            )}
           >
-            <ExternalLink size={9} />
+            {variant.reference}
+            <ExternalLink size={8} />
           </a>
+        ) : (
+          <span className={cn("text-zinc-400", isPassed && "line-through")}>
+            {variant.reference}
+          </span>
         )}
-        {isTopPick && <Star size={9} className="text-[#b8973a] fill-[#b8973a] flex-shrink-0" />}
-      </div>
-      {/* Line 2: specs */}
-      <p className="text-[10px] text-zinc-600 mt-0.5" style={{ fontFamily: "var(--font-mono)" }}>
-        {specs}
+        {specs && <span className="text-zinc-600"> · {specs}</span>}
+        {isTopPick && <Star size={9} className="text-[#b8973a] fill-[#b8973a] flex-shrink-0 inline ml-1 align-middle" />}
       </p>
     </div>
   );

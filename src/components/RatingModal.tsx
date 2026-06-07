@@ -34,35 +34,27 @@ function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBloc
         isPassed && "opacity-35"
       )}
     >
-      {/* Line 1: ref + link + badge + price */}
-      <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-        <span
-          className={cn(
-            "text-[10px] text-zinc-400",
-            isPassed && "line-through"
-          )}
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          {variant.reference}
-        </span>
-        {variant.link && (
+      {/* Single line: ref (linked) · specs */}
+      <p className="text-[10px] mb-3" style={{ fontFamily: "var(--font-mono)" }}>
+        {variant.link ? (
           <a
             href={variant.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-zinc-600 hover:text-[#b8973a] transition-colors"
+            className={cn(
+              "inline-flex items-center gap-1 text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
+              isPassed && "line-through"
+            )}
           >
-            <ExternalLink size={9} />
+            {variant.reference}
+            <ExternalLink size={8} />
           </a>
+        ) : (
+          <span className={cn("text-zinc-400", isPassed && "line-through")}>
+            {variant.reference}
+          </span>
         )}
-      </div>
-
-      {/* Line 2: specs */}
-      <p
-        className="text-[10px] text-zinc-600 mb-3"
-        style={{ fontFamily: "var(--font-mono)" }}
-      >
-        {specs}
+        {specs && <span className="text-zinc-600"> · {specs}</span>}
       </p>
 
       {/* Line 3: reaction buttons + top pick */}
