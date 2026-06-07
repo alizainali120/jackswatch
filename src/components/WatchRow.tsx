@@ -37,19 +37,6 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
             <ExternalLink size={9} />
           </a>
         )}
-        <span
-          className={cn(
-            "text-[8px] px-1.5 py-0.5 font-semibold tracking-wide uppercase",
-            variant.condition === "new" ? "bg-zinc-800 text-zinc-500" : "bg-amber-950/50 text-amber-600"
-          )}
-        >
-          {variant.condition === "new" ? "NEW" : "PRE"}
-        </span>
-        {variant.priceRange && (
-          <span className="text-[10px] text-zinc-500 ml-auto" style={{ fontFamily: "var(--font-mono)" }}>
-            {variant.priceRange}
-          </span>
-        )}
         {isTopPick && <Star size={9} className="text-[#b8973a] fill-[#b8973a] flex-shrink-0" />}
       </div>
       {/* Line 2: specs */}

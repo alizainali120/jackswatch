@@ -5,10 +5,6 @@ import { X, ExternalLink, Star } from "lucide-react";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 import { cn, STRAP_LABELS } from "@/lib/utils";
 
-const QUICK_TAGS = [
-  "Sporty", "Dressy", "Versatile", "Everyday", "Bold", "Understated",
-  "Comfortable", "Heavy", "Wears large", "Wears small", "Clean dial", "Statement",
-];
 
 interface VariantBlockProps {
   variant: WatchVariant;
@@ -58,24 +54,6 @@ function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBloc
           >
             <ExternalLink size={9} />
           </a>
-        )}
-        <span
-          className={cn(
-            "text-[8px] px-1.5 py-0.5 font-semibold tracking-wide uppercase",
-            variant.condition === "new"
-              ? "bg-zinc-800 text-zinc-500"
-              : "bg-amber-950/50 text-amber-600"
-          )}
-        >
-          {variant.condition === "new" ? "NEW" : "PRE"}
-        </span>
-        {variant.priceRange && (
-          <span
-            className="text-[10px] text-zinc-500 ml-auto"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            {variant.priceRange}
-          </span>
         )}
       </div>
 
@@ -143,7 +121,6 @@ interface RatingModalProps {
   onUpdateVariant: (variantId: string, reaction: Reaction | null) => void;
   onSetTopPick: (variantId: string | null) => void;
   onUpdateNotes: (notes: string) => void;
-  onUpdateTags: (tags: string[]) => void;
 }
 
 export function RatingModal({
@@ -152,7 +129,6 @@ export function RatingModal({
   onUpdateVariant,
   onSetTopPick,
   onUpdateNotes,
-  onUpdateTags,
 }: RatingModalProps) {
   const [visible, setVisible] = useState(false);
   const [localNotes, setLocalNotes] = useState(model.notes);
@@ -177,13 +153,6 @@ export function RatingModal({
     if (localNotes !== model.notes) {
       onUpdateNotes(localNotes);
     }
-  }
-
-  function handleTagToggle(tag: string) {
-    const current = model.reactionTags ?? [];
-    onUpdateTags(
-      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]
-    );
   }
 
   return (
@@ -258,36 +227,6 @@ export function RatingModal({
                   }
                 />
               ))}
-            </div>
-          </section>
-
-          {/* QUICK TAGS */}
-          <section>
-            <p
-              className="text-[9px] uppercase tracking-[0.25em] text-[#b8973a] mb-3 pb-2 border-b border-[#b8973a]/20"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              Tags
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_TAGS.map((tag) => {
-                const active = (model.reactionTags ?? []).includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagToggle(tag)}
-                    className={cn(
-                      "px-3 py-1.5 border text-[10px] transition-all",
-                      active
-                        ? "bg-[#b8973a] border-[#b8973a] text-black"
-                        : "border-zinc-800 text-zinc-500 hover:border-[#b8973a]/40 hover:text-[#b8973a]/70"
-                    )}
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
             </div>
           </section>
 

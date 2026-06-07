@@ -111,16 +111,6 @@ export function AppClient() {
     }).catch(console.error).finally(() => setSaving(false));
   }, []);
 
-  const handleUpdateTags = useCallback((modelId: string, reactionTags: string[]) => {
-    setModels((prev) => prev.map((m) => m.id === modelId ? { ...m, reactionTags } : m));
-    setSaving(true);
-    fetch(`/api/watches/${modelId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reactionTags }),
-    }).catch(console.error).finally(() => setSaving(false));
-  }, []);
-
   const handleModalClose = useCallback(() => {
     if (!activeModelId) { setActiveModelId(null); return; }
     const model = models.find((m) => m.id === activeModelId);
@@ -276,7 +266,6 @@ export function AppClient() {
           }
           onSetTopPick={(variantId) => handleSetTopPick(activeModel.id, variantId)}
           onUpdateNotes={(notes) => handleUpdateNotes(activeModel.id, notes)}
-          onUpdateTags={(tags) => handleUpdateTags(activeModel.id, tags)}
         />
       )}
     </div>
