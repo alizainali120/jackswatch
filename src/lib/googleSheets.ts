@@ -245,6 +245,59 @@ export async function updateModelRank(id: string, rank: number | null): Promise<
   });
 }
 
+export async function createModel(
+  brand: string,
+  name: string,
+  variants: { reference: string; label: string; link?: string }[]
+): Promise<WatchModel> {
+  const sheets = await client();
+  await ensureTab(sheets, MODELS_TAB, MODELS_HEADERS);
+  await ensureTab(sheets, VARIANTS_TAB, VARIANTS_HEADERS);
+
+  const modelId = `m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const newModel: WatchModel = {
+    id: modelId,
+    brand,
+    name,
+    heroImage: "",
+    notes: "",
+    rank: null,
+    reactionTags: [],
+    topPickVariantId: null,
+    variants: variants.map((v, i) => ({
+      id: `v_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`,
+      modelId,
+      reference: v.reference,
+      label: v.label,
+      size: undefined,
+      dialColor: "",
+      strapType: "bracelet",
+      strapColor: "",
+      condition: "new",
+      priceRange: undefined,
+      link: v.link || undefined,
+      reaction: null,
+    })),
+  };
+
+  await Promise.all([
+    sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId(),
+      range: `${MODELS_TAB}!A:H`,
+      valueInputOption: "RAW",
+      requestBody: { values: [modelToRow(newModel)] },
+    }),
+    sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId(),
+      range: `${VARIANTS_TAB}!A:L`,
+      valueInputOption: "RAW",
+      requestBody: { values: newModel.variants.map(variantToRow) },
+    }),
+  ]);
+
+  return newModel;
+}
+
 export async function saveModelRanks(ranks: { id: string; rank: number }[]): Promise<void> {
   const sheets = await client();
   const res = await sheets.spreadsheets.values.get({

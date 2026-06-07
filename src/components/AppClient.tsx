@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import type { WatchModel, Reaction } from "@/types/watch";
 import { WatchRow } from "@/components/WatchRow";
 import { RatingModal } from "@/components/RatingModal";
-import { Watch as WatchIcon, Loader2, AlertCircle } from "lucide-react";
+import { AddWatchModal } from "@/components/AddWatchModal";
+import { Watch as WatchIcon, Loader2, AlertCircle, Plus } from "lucide-react";
 import Link from "next/link";
 
 export function AppClient() {
@@ -13,6 +14,7 @@ export function AppClient() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeModelId, setActiveModelId] = useState<string | null>(null);
+  const [addingWatch, setAddingWatch] = useState(false);
 
   useEffect(() => {
     fetch("/api/watches")
@@ -131,6 +133,22 @@ export function AppClient() {
     setActiveModelId(null);
   }, [activeModelId, models]);
 
+  const handleAddWatch = useCallback(async (
+    brand: string,
+    name: string,
+    variants: { reference: string; label: string; link?: string }[]
+  ) => {
+    const res = await fetch("/api/watches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand, name, variants }),
+    });
+    if (!res.ok) throw new Error("Failed to add watch");
+    const newModel = await res.json();
+    setModels((prev) => [...prev, newModel]);
+    setAddingWatch(false);
+  }, []);
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -170,6 +188,13 @@ export function AppClient() {
                 Saving
               </span>
             )}
+            <button
+              onClick={() => setAddingWatch(true)}
+              className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+              title="Add watch"
+            >
+              <Plus size={16} />
+            </button>
             <Link
               href="/summary"
               className="border border-[#b8973a]/40 text-[#b8973a] text-[10px] tracking-widest uppercase px-3 py-1.5 hover:bg-[#b8973a]/10 transition-colors"
@@ -255,6 +280,14 @@ export function AppClient() {
           </section>
         )}
       </main>
+
+      {/* Add watch modal */}
+      {addingWatch && (
+        <AddWatchModal
+          onClose={() => setAddingWatch(false)}
+          onAdd={handleAddWatch}
+        />
+      )}
 
       {/* Rating modal */}
       {activeModel && (
