@@ -113,32 +113,41 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
               </p>
             </div>
 
-            {rank !== null && (
-              <div className="flex items-center gap-0 border border-zinc-700 flex-shrink-0 mt-0.5">
-                <button
-                  onClick={onMoveUp}
-                  disabled={!onMoveUp}
-                  title="Move up"
-                  className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
-                >
-                  <ChevronUp size={12} strokeWidth={2} />
-                </button>
-                <span
-                  className="text-[11px] font-medium text-zinc-200 tabular-nums border-l border-r border-zinc-700 px-2 py-1 text-center"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  {rank}
-                </span>
-                <button
-                  onClick={onMoveDown}
-                  disabled={!onMoveDown}
-                  title="Move down"
-                  className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
-                >
-                  <ChevronDown size={12} strokeWidth={2} />
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+              {rank !== null && (
+                <div className="flex items-center border border-zinc-700">
+                  <button
+                    onClick={onMoveUp}
+                    disabled={!onMoveUp}
+                    title="Move up"
+                    className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
+                  >
+                    <ChevronUp size={12} strokeWidth={2} />
+                  </button>
+                  <span
+                    className="text-[11px] font-medium text-zinc-200 tabular-nums border-l border-r border-zinc-700 px-2 py-1 text-center"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    {rank}
+                  </span>
+                  <button
+                    onClick={onMoveDown}
+                    disabled={!onMoveDown}
+                    title="Move down"
+                    className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
+                  >
+                    <ChevronDown size={12} strokeWidth={2} />
+                  </button>
+                </div>
+              )}
+              <button
+                onClick={onRate}
+                className="border border-[#b8973a] text-[#b8973a] px-3 py-1 text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors"
+                style={{ fontFamily: "var(--font-sans)" }}
+              >
+                Rate
+              </button>
+            </div>
           </div>
 
           {/* Separator */}
@@ -171,15 +180,6 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
             </>
           )}
 
-          <div className="flex justify-end pt-1">
-            <button
-              onClick={onRate}
-              className="border border-[#b8973a] text-[#b8973a] px-3 py-1.5 text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors"
-              style={{ fontFamily: "var(--font-sans)" }}
-            >
-              Rate
-            </button>
-          </div>
         </div>
       </div>
     </div>
