@@ -341,15 +341,14 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
           ) : (
             <div className="divide-y divide-zinc-800">
               {preferredModels.map((model, i) => (
-                <div key={model.id} className="pt-8 first:pt-0">
-                  <WatchRow
-                    model={model}
-                    rank={i + 1}
-                    onRate={() => setActiveModelId(model.id)}
-                    onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                    onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
-                  />
-                </div>
+                <WatchRow
+                  key={model.id}
+                  model={model}
+                  rank={i + 1}
+                  onRate={() => setActiveModelId(model.id)}
+                  onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
+                  onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
+                />
               ))}
             </div>
           )}
@@ -368,13 +367,12 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
             </div>
             <div className="divide-y divide-zinc-800">
               {unranked.map((model) => (
-                <div key={model.id} className="pt-8 first:pt-0">
-                  <WatchRow
-                    model={model}
-                    rank={null}
-                    onRate={() => setActiveModelId(model.id)}
-                  />
-                </div>
+                <WatchRow
+                  key={model.id}
+                  model={model}
+                  rank={null}
+                  onRate={() => setActiveModelId(model.id)}
+                />
               ))}
             </div>
           </section>
@@ -393,14 +391,13 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
             </div>
             <div className="divide-y divide-zinc-800">
               {passed.map((model) => (
-                <div key={model.id} className="pt-8 first:pt-0">
-                  <WatchRow
-                    model={model}
-                    rank={null}
-                    isPassed
-                    onRate={() => setActiveModelId(model.id)}
-                  />
-                </div>
+                <WatchRow
+                  key={model.id}
+                  model={model}
+                  rank={null}
+                  isPassed
+                  onRate={() => setActiveModelId(model.id)}
+                />
               ))}
             </div>
           </section>
