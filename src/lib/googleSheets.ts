@@ -29,20 +29,15 @@ async function client() {
 
 // ── Sheet layout ──────────────────────────────────────────────────────────────
 // "models"  : A=id  B=brand  C=name  D=heroImage  E=notes  F=rank
-//             G=reactionTags(JSON)  H=topPickVariantId
-// "variants": A=id  B=modelId  C=reference  D=label  E=size  F=dialColor
-//             G=strapType  H=strapColor  I=condition  J=priceRange  K=link
-//             L=reaction
+//             G=topPickVariantId
+// "variants": A=id  B=modelId  C=reference  D=label  E=link  F=reaction
 // To reseed: clear data rows (not header) in both tabs.
 
 const MODELS_TAB = "models";
 const VARIANTS_TAB = "variants";
 
-const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "notes", "rank", "reactionTags", "topPickVariantId"];
-const VARIANTS_HEADERS = [
-  "id", "modelId", "reference", "label", "size", "dialColor",
-  "strapType", "strapColor", "condition", "priceRange", "link", "reaction",
-];
+const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "notes", "rank", "topPickVariantId"];
+const VARIANTS_HEADERS = ["id", "modelId", "reference", "label", "link", "reaction"];
 
 async function ensureTab(
   sheets: Awaited<ReturnType<typeof client>>,
@@ -90,11 +85,6 @@ async function findRowIndex(
 }
 
 function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
-  let reactionTags: string[] = [];
-  try {
-    const parsed = JSON.parse(row[6] || "[]");
-    reactionTags = Array.isArray(parsed) ? parsed : [];
-  } catch {}
   return {
     id: row[0] ?? "",
     brand: row[1] ?? "",
@@ -102,8 +92,7 @@ function rowToModel(row: string[]): Omit<WatchModel, "variants"> {
     heroImage: row[3] ?? "",
     notes: row[4] ?? "",
     rank: row[5] && !isNaN(parseInt(row[5])) ? parseInt(row[5]) : null,
-    reactionTags,
-    topPickVariantId: row[7] || null,
+    topPickVariantId: row[6] || null,
   };
 }
 
@@ -113,30 +102,20 @@ function rowToVariant(row: string[]): WatchVariant {
     modelId: row[1] ?? "",
     reference: row[2] ?? "",
     label: row[3] ?? "",
-    size: row[4] || undefined,
-    dialColor: row[5] ?? "",
-    strapType: (row[6] as WatchVariant["strapType"]) || "bracelet",
-    strapColor: row[7] ?? "",
-    condition: (row[8] as WatchVariant["condition"]) || "new",
-    priceRange: row[9] || undefined,
-    link: row[10] || undefined,
-    reaction: (row[11] as Reaction) || null,
+    link: row[4] || undefined,
+    reaction: (row[5] as Reaction) || null,
   };
 }
 
 function modelToRow(m: Omit<WatchModel, "variants">): string[] {
   return [
     m.id, m.brand, m.name, m.heroImage, m.notes,
-    m.rank !== null ? String(m.rank) : "", JSON.stringify(m.reactionTags ?? []), m.topPickVariantId ?? "",
+    m.rank !== null ? String(m.rank) : "", m.topPickVariantId ?? "",
   ];
 }
 
 function variantToRow(v: WatchVariant): string[] {
-  return [
-    v.id, v.modelId, v.reference, v.label, v.size ?? "",
-    v.dialColor, v.strapType, v.strapColor, v.condition,
-    v.priceRange ?? "", v.link ?? "", v.reaction ?? "",
-  ];
+  return [v.id, v.modelId, v.reference, v.label, v.link ?? "", v.reaction ?? ""];
 }
 
 export async function getAllModels(): Promise<WatchModel[]> {
@@ -145,8 +124,8 @@ export async function getAllModels(): Promise<WatchModel[]> {
   await ensureTab(sheets, VARIANTS_TAB, VARIANTS_HEADERS);
 
   const [modelsRes, variantsRes] = await Promise.all([
-    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${MODELS_TAB}!A:H` }),
-    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:L` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${MODELS_TAB}!A:G` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:F` }),
   ]);
 
   const modelRows = (modelsRes.data.values ?? []).slice(1).filter((r) => r[0]);
@@ -158,13 +137,13 @@ export async function getAllModels(): Promise<WatchModel[]> {
     await Promise.all([
       sheets.spreadsheets.values.append({
         spreadsheetId: sheetId(),
-        range: `${MODELS_TAB}!A:H`,
+        range: `${MODELS_TAB}!A:G`,
         valueInputOption: "RAW",
         requestBody: { values: allModelRows },
       }),
       sheets.spreadsheets.values.append({
         spreadsheetId: sheetId(),
-        range: `${VARIANTS_TAB}!A:L`,
+        range: `${VARIANTS_TAB}!A:F`,
         valueInputOption: "RAW",
         requestBody: { values: allVariantRows },
       }),
@@ -209,25 +188,13 @@ export async function updateModelNotes(id: string, notes: string): Promise<void>
   });
 }
 
-export async function updateModelReactionTags(id: string, tags: string[]): Promise<void> {
-  const sheets = await client();
-  const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
-  if (rowIdx === null) return;
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: sheetId(),
-    range: `${MODELS_TAB}!G${rowIdx}`,
-    valueInputOption: "RAW",
-    requestBody: { values: [[JSON.stringify(tags)]] },
-  });
-}
-
 export async function updateModelTopPick(id: string, topPickVariantId: string | null): Promise<void> {
   const sheets = await client();
   const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
   if (rowIdx === null) return;
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId(),
-    range: `${MODELS_TAB}!H${rowIdx}`,
+    range: `${MODELS_TAB}!G${rowIdx}`,
     valueInputOption: "RAW",
     requestBody: { values: [[topPickVariantId ?? ""]] },
   });
@@ -239,7 +206,7 @@ export async function updateVariantReaction(id: string, reaction: Reaction | nul
   if (rowIdx === null) return;
   await sheets.spreadsheets.values.update({
     spreadsheetId: sheetId(),
-    range: `${VARIANTS_TAB}!L${rowIdx}`,
+    range: `${VARIANTS_TAB}!F${rowIdx}`,
     valueInputOption: "RAW",
     requestBody: { values: [[reaction ?? ""]] },
   });
@@ -274,19 +241,12 @@ export async function createModel(
     heroImage: "",
     notes: "",
     rank: null,
-    reactionTags: [],
     topPickVariantId: null,
     variants: variants.map((v, i) => ({
       id: `v_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`,
       modelId,
       reference: v.reference,
       label: v.label,
-      size: undefined,
-      dialColor: "",
-      strapType: "bracelet",
-      strapColor: "",
-      condition: "new",
-      priceRange: undefined,
       link: v.link || undefined,
       reaction: null,
     })),
@@ -295,13 +255,13 @@ export async function createModel(
   await Promise.all([
     sheets.spreadsheets.values.append({
       spreadsheetId: sheetId(),
-      range: `${MODELS_TAB}!A:H`,
+      range: `${MODELS_TAB}!A:G`,
       valueInputOption: "RAW",
       requestBody: { values: [modelToRow(newModel)] },
     }),
     sheets.spreadsheets.values.append({
       spreadsheetId: sheetId(),
-      range: `${VARIANTS_TAB}!A:L`,
+      range: `${VARIANTS_TAB}!A:F`,
       valueInputOption: "RAW",
       requestBody: { values: newModel.variants.map(variantToRow) },
     }),
@@ -320,18 +280,12 @@ export async function createVariant(
     modelId,
     reference: data.reference,
     label: data.label,
-    size: undefined,
-    dialColor: "",
-    strapType: "bracelet",
-    strapColor: "",
-    condition: "new",
-    priceRange: undefined,
     link: data.link || undefined,
     reaction: null,
   };
   await sheets.spreadsheets.values.append({
     spreadsheetId: sheetId(),
-    range: `${VARIANTS_TAB}!A:L`,
+    range: `${VARIANTS_TAB}!A:F`,
     valueInputOption: "RAW",
     requestBody: { values: [variantToRow(variant)] },
   });
