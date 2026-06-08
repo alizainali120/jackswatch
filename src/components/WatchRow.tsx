@@ -61,7 +61,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
 
   return (
     <div className={cn("bg-black border-b border-zinc-900", isPassed && "opacity-50 saturate-0")}>
-      <div className="flex flex-row gap-0 pt-2">
+      <div className="flex flex-row gap-0 pt-2 px-2">
 
         {/* ── Image thumbnail ─────────────────────────────────────────────── */}
         <div className="relative flex-shrink-0 w-[90px] sm:w-[120px]">
@@ -92,7 +92,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-3 pt-2 pb-3 flex flex-col gap-1">
+        <div className="flex-1 min-w-0 px-3 pb-3 flex flex-col gap-1">
 
           {/* Header: brand + name + rank widget */}
           <div className="flex items-start justify-between gap-2">
