@@ -78,7 +78,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
     } else {
       const next = failedAttempts + 1;
       setFailedAttempts(next);
-      setErrorMsg(ERROR_MESSAGES[(next - 1) % ERROR_MESSAGES.length]);
+      setErrorMsg(ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]);
       setShaking(true);
       setInput("");
       setTimeout(() => setShaking(false), 400);
