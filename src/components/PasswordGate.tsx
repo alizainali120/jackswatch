@@ -3,16 +3,31 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Lock, LockOpen } from "lucide-react";
 
-const PASSWORD = "jackali";
-const STORAGE_KEY = "jacks-watch-access";
+const PASSWORD = "wristcheck";
+const STORAGE_KEY = "jwg_unlocked";
 
 const QUOTES = [
-  "The right watch for the biggest chapter yet. Let's find it.",
-  "Every great love story deserves a great watch to mark it.",
-  "You're not just picking a watch — you're picking a witness to the best moments ahead.",
-  "A marriage, a milestone, a timepiece. Some things are meant to last forever.",
-  "Family helps you pick the watch. The watch helps you remember why.",
-  "Here's to the man, the moment, and the watch that ties it all together.",
+  "Time is money. You're about to spend both.",
+  "A man with one watch knows the time. A man with two watches knows Ali.",
+  "Your wrist called. It wants a Swiss accent.",
+  "Ali spent hours on this. The least you can do is pick something.",
+  "Some people collect art. You're about to collect compliments.",
+  "Behind every great man is a greater watch.",
+  "Horological decisions are being made here.",
+  "No pressure. Just the rest of your wrist's life.",
+  "You don't need another watch. But here we are.",
+  "Patina is earned. This site was too.",
+  "42mm of pure confidence, incoming.",
+  "In-house movement? More like in-house excitement.",
+];
+
+const ERROR_MESSAGES = [
+  "Not even close, Jack.",
+  "Try again. Think watches.",
+  "The vault remains sealed.",
+  "Wrong combination.",
+  "Ali is shaking his head somewhere.",
+  "Your watch is waiting. This password isn't it.",
 ];
 
 function getGreeting(): string {
@@ -25,9 +40,12 @@ function getGreeting(): string {
 export function PasswordGate({ children }: { children: React.ReactNode }) {
   const [unlocked, setUnlocked] = useState<boolean | null>(null);
   const [transitioning, setTransitioning] = useState(false);
+  const [fading, setFading] = useState(false);
   const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [shaking, setShaking] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
@@ -48,12 +66,19 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
     if (input.toLowerCase().trim() === PASSWORD) {
       localStorage.setItem(STORAGE_KEY, "true");
       setTransitioning(true);
+      setErrorMsg(null);
       setTimeout(() => {
-        setUnlocked(true);
-        setTimeout(() => setTransitioning(false), 50);
+        setFading(true);
+        setTimeout(() => {
+          setUnlocked(true);
+          setTransitioning(false);
+          setFading(false);
+        }, 700);
       }, 800);
     } else {
-      setError(true);
+      const next = failedAttempts + 1;
+      setFailedAttempts(next);
+      setErrorMsg(ERROR_MESSAGES[(next - 1) % ERROR_MESSAGES.length]);
       setShaking(true);
       setInput("");
       setTimeout(() => setShaking(false), 400);
@@ -61,58 +86,72 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const inputBorder = errorMsg
+    ? "1px solid #dc2626"
+    : focused
+    ? "1px solid rgba(184,151,58,0.5)"
+    : "1px solid #27272a";
+
   return (
     <div
-      className={`min-h-screen bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden transition-opacity duration-700 ${
-        transitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
+      className={`min-h-screen bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden transition-[opacity,transform] duration-700 ${
+        fading ? "opacity-0 scale-[0.97]" : "opacity-100 scale-100"
       }`}
-      style={{ transitionProperty: "opacity, transform" }}
     >
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(0deg, rgba(184,151,58,0.04) 0, rgba(184,151,58,0.04) 1px, transparent 0, transparent 48px), repeating-linear-gradient(90deg, rgba(184,151,58,0.04) 0, rgba(184,151,58,0.04) 1px, transparent 0, transparent 48px)",
+            "linear-gradient(rgba(184,151,58,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(184,151,58,0.035) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
         }}
       />
 
       <div className={`relative w-full max-w-xs${shaking ? " shake" : ""}`}>
         <div className="flex justify-center mb-8">
-          <div className="lock-icon-container w-16 h-16 border border-[#b8973a]/30 bg-[#b8973a]/8 flex items-center justify-center relative">
+          <div
+            className="lock-icon-container w-12 h-12 flex items-center justify-center relative"
+            style={{ border: "1.5px solid #b8973a" }}
+          >
             {transitioning ? (
-              <LockOpen size={22} className="text-[#b8973a] lock-open-animate" strokeWidth={1.5} />
+              <LockOpen size={20} className="text-[#b8973a] lock-open-animate" strokeWidth={1.5} />
             ) : (
-              <Lock size={22} className="text-[#b8973a]" strokeWidth={1.5} />
+              <Lock size={20} className="text-[#b8973a]" strokeWidth={1.5} />
             )}
             <div className="lock-glow" />
           </div>
         </div>
 
         <p
-          className="text-center text-[9px] tracking-[0.45em] uppercase text-[#b8973a] mb-2"
-          style={{ fontFamily: "var(--font-mono)" }}
+          className="text-center text-[8.5px] tracking-[0.3em] uppercase mb-2"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(184,151,58,0.75)" }}
         >
           Jack&apos;s Watch Guide
         </p>
 
         <h1
-          className="text-center text-[28px] font-light text-[#FAF6EE] leading-tight mb-1"
-          style={{ fontFamily: "var(--font-display)" }}
+          className="text-center text-[28px] font-light leading-tight mb-1"
+          style={{ fontFamily: "var(--font-display)", color: "#f0ede6" }}
         >
-          {transitioning ? "Welcome back." : getGreeting()}
+          {getGreeting()}
         </h1>
+
         <p
-          className="text-center text-[11px] text-zinc-500 mb-7"
+          className="text-center text-[10.5px] text-zinc-500 mb-7 tracking-[0.03em]"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          {transitioning
-            ? "Opening the vault\u2026"
-            : "Enter the password to access your collection."}
+          Enter the password to unlock your collection.
         </p>
 
-        <div className="border-t border-b border-zinc-800/60 py-4 mb-8 text-center">
+        <div
+          className="py-4 mb-8 text-center"
+          style={{
+            borderTop: "1px solid rgba(184,151,58,0.12)",
+            borderBottom: "1px solid rgba(184,151,58,0.12)",
+          }}
+        >
           <p
-            className="text-[11px] text-zinc-600 italic leading-relaxed"
+            className="text-[10px] text-zinc-600 italic leading-relaxed"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             &ldquo;{quote}&rdquo;
@@ -127,42 +166,61 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
-                setError(false);
+                setErrorMsg(null);
               }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               placeholder="password"
               autoComplete="off"
-              className={`w-full bg-zinc-950 border px-4 py-3 text-sm text-[#FAF6EE] tracking-[0.25em] placeholder:text-zinc-700 placeholder:tracking-[0.15em] focus:outline-none transition-colors ${
-                error
-                  ? "border-red-900"
-                  : "border-zinc-800 focus:border-[#b8973a]/50"
-              }`}
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="w-full px-4 py-3 placeholder:text-zinc-700 placeholder:tracking-[0.15em] focus:outline-none transition-colors"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: "#18181b",
+                border: inputBorder,
+                fontSize: "13px",
+                letterSpacing: "0.12em",
+                color: "#e4e4e7",
+              }}
             />
-            {error && (
+            {errorMsg && (
               <p
                 className="text-[10px] text-red-600/80 mt-1.5 tracking-widest"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                wrong password — try again
+                {errorMsg}
+              </p>
+            )}
+            {failedAttempts >= 2 && (
+              <p
+                className="text-[9px] mt-1 text-right"
+                style={{ fontFamily: "var(--font-mono)", color: "#3f3f46" }}
+              >
+                {failedAttempts} failed attempt{failedAttempts !== 1 ? "s" : ""}
               </p>
             )}
           </div>
+
           <button
             type="submit"
             disabled={transitioning}
-            className="w-full border border-[#b8973a] text-[#b8973a] py-3 text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors disabled:opacity-50"
-            style={{ fontFamily: "var(--font-sans)" }}
+            className="w-full py-3 text-[10.5px] tracking-[0.2em] uppercase transition-colors disabled:opacity-50"
+            style={{
+              fontFamily: "var(--font-sans)",
+              background: "transparent",
+              border: "1px solid #b8973a",
+              color: "#b8973a",
+              fontWeight: 500,
+            }}
+            onMouseEnter={(e) => {
+              if (!transitioning) e.currentTarget.style.background = "rgba(184,151,58,0.07)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
           >
-            {transitioning ? "Unlocking\u2026" : "Unlock the vault \u2192"}
+            {transitioning ? "Unlocking…" : "Unlock the Vault →"}
           </button>
         </form>
-
-        <p
-          className="text-center text-[9px] text-zinc-700 mt-6 tracking-wider"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          hint: first name + last name, no space
-        </p>
       </div>
     </div>
   );
