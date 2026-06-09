@@ -72,7 +72,7 @@ select option {
   color: #FAF6EE;
 }
 
-/* ---- Password gate shake ---- */
+/* ---- Password gate animations ---- */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20%       { transform: translateX(-8px); }
@@ -81,6 +81,30 @@ select option {
   80%       { transform: translateX(5px); }
 }
 .shake { animation: shake 0.4s ease-in-out; }
+
+.lock-icon-container {
+  position: relative;
+}
+
+.lock-glow {
+  position: absolute;
+  inset: -6px;
+  background: radial-gradient(circle, rgba(184,151,58,0.12) 0%, transparent 70%);
+  animation: lock-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lock-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50%      { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes lock-open {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  40%  { transform: scale(1.2) rotate(-10deg); opacity: 1; }
+  100% { transform: scale(1.4) rotate(0deg); opacity: 0; }
+}
+.lock-open-animate { animation: lock-open 0.6s ease-out forwards; }
 
 /* ---- Print styles ---- */
 @media print {

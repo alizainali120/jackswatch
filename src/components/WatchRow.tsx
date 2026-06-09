@@ -61,7 +61,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
 
   return (
     <div className={cn("bg-black border-b border-zinc-900", isPassed && "opacity-50 saturate-0")}>
-      <div className="flex flex-row gap-0 pt-2 px-2">
+      <div className="flex flex-row gap-0 py-2 px-2">
 
         {/* ── Image thumbnail ─────────────────────────────────────────────── */}
         <div className="relative flex-shrink-0 w-[90px] sm:w-[120px]">
