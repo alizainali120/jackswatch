@@ -35,7 +35,7 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
         {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
         {isTopPick && (
           <span
-            className="inline-block ml-1.5 px-1.5 py-0.5 text-[9px] uppercase tracking-widest border border-[#b8973a]/60 text-[#b8973a] align-middle leading-none"
+            className="inline-block ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-widest border border-[#b8973a]/60 text-[#b8973a] align-middle leading-none"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             Top Pick
@@ -98,7 +98,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p
-                className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
+                className="text-[11px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 {model.brand}

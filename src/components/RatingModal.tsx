@@ -179,7 +179,7 @@ export function RatingModal({
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-[#b8973a]/15 flex-shrink-0">
           <div>
             <p
-              className="text-[10px] uppercase tracking-[0.2em] text-zinc-400"
+              className="text-[11px] uppercase tracking-[0.2em] text-zinc-400"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               {model.brand}

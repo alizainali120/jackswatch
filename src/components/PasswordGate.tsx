@@ -123,8 +123,8 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
         </div>
 
         <p
-          className="text-center text-[8.5px] tracking-[0.3em] uppercase mb-2"
-          style={{ fontFamily: "var(--font-mono)", color: "rgba(184,151,58,0.75)" }}
+          className="text-center text-[11px] tracking-[0.3em] uppercase mb-2"
+          style={{ fontFamily: "var(--font-mono)", color: "#b8973a" }}
         >
           Jack&apos;s Watch Guide
         </p>
@@ -137,7 +137,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
         </h1>
 
         <p
-          className="text-center text-[10.5px] text-zinc-500 mb-7 tracking-[0.03em]"
+          className="text-center text-[11px] text-zinc-400 mb-7 tracking-[0.03em]"
           style={{ fontFamily: "var(--font-mono)" }}
         >
           Enter the password to unlock your collection.
@@ -151,7 +151,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
           }}
         >
           <p
-            className="text-[10px] text-zinc-600 italic leading-relaxed"
+            className="text-[11px] text-zinc-400 italic leading-relaxed"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             &ldquo;{quote}&rdquo;
@@ -172,7 +172,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
               onBlur={() => setFocused(false)}
               placeholder="password"
               autoComplete="off"
-              className="w-full px-4 py-3 placeholder:text-zinc-700 placeholder:tracking-[0.15em] focus:outline-none transition-colors"
+              className="w-full px-4 py-3 placeholder:text-zinc-600 placeholder:tracking-[0.15em] focus:outline-none transition-colors"
               style={{
                 fontFamily: "var(--font-mono)",
                 background: "#18181b",
@@ -184,7 +184,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
             />
             {errorMsg && (
               <p
-                className="text-[10px] text-red-600/80 mt-1.5 tracking-widest"
+                className="text-[11px] text-red-500 mt-1.5 tracking-widest"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 {errorMsg}
@@ -192,8 +192,8 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
             )}
             {failedAttempts >= 2 && (
               <p
-                className="text-[9px] mt-1 text-right"
-                style={{ fontFamily: "var(--font-mono)", color: "#3f3f46" }}
+                className="text-[11px] mt-1 text-right text-zinc-500"
+                style={{ fontFamily: "var(--font-mono)" }}
               >
                 {failedAttempts} failed attempt{failedAttempts !== 1 ? "s" : ""}
               </p>
