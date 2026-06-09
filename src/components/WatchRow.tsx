@@ -92,7 +92,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
         </div>
 
         {/* ── Content ────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-3 pb-3 flex flex-col gap-1">
+        <div className="flex-1 min-w-0 px-3 flex flex-col gap-1">
 
           {/* Header: brand + name + rank widget */}
           <div className="flex items-start justify-between gap-2">
