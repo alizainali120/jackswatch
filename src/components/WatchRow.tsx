@@ -60,7 +60,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
   const gradient = getBrandGradient(model.brand);
 
   return (
-    <div className={cn("bg-black border-b border-zinc-900 py-2", isPassed && "opacity-50 saturate-0")}>
+    <div className={cn("bg-black border-b border-zinc-900 py-3", isPassed && "opacity-50 saturate-0")}>
       <div className="flex flex-row gap-0 px-2">
 
         {/* ── Image thumbnail ─────────────────────────────────────────────── */}
