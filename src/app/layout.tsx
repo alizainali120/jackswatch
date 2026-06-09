@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Mono, DM_Sans } from "next/font/google";
+import { PasswordGate } from "@/components/PasswordGate";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -38,7 +39,9 @@ export default function RootLayout({
       lang="en"
       className={`h-full ${cormorant.variable} ${dmMono.variable} ${dmSans.variable}`}
     >
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="min-h-full antialiased">
+          <PasswordGate>{children}</PasswordGate>
+        </body>
     </html>
   );
 }
