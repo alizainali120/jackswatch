@@ -107,7 +107,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
         }}
       />
 
-      <div className={`relative w-full max-w-xs${shaking ? " shake" : ""}`}>
+      <div className={`relative w-full max-w-xs sm:max-w-[260px]${shaking ? " shake" : ""}`}>
         <div className="flex justify-center mb-8">
           <div
             className="lock-icon-container w-12 h-12 flex items-center justify-center relative"
