@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Star, Loader2, Plus } from "lucide-react";
+import { X, Star, Plus } from "lucide-react";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
         <button
           onClick={() => onReact(isPreferred ? null : "preferred")}
           className={cn(
-            "px-3.5 py-2 border text-[11px] font-medium tracking-wide transition-all",
+            "px-3.5 py-2.5 sm:py-2 border text-[11px] font-medium tracking-wide transition-all active:scale-[0.97]",
             isPreferred
               ? "bg-[#F5E6C8] border-[#F5E6C8] text-black"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
@@ -68,7 +68,7 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
         <button
           onClick={() => onReact(isPassed ? null : "pass")}
           className={cn(
-            "px-3.5 py-2 border text-[11px] font-medium tracking-wide transition-all",
+            "px-3.5 py-2.5 sm:py-2 border text-[11px] font-medium tracking-wide transition-all active:scale-[0.97]",
             isPassed
               ? "border-zinc-600 text-zinc-500 bg-zinc-900/50"
               : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
@@ -164,7 +164,7 @@ export function RatingModal({
       <div
         className={cn(
           "fixed z-50 flex flex-col bg-black",
-          "bottom-0 inset-x-0 max-h-[88vh]",
+          "bottom-0 inset-x-0 max-h-[80dvh]",
           "md:inset-x-auto md:left-1/2 md:bottom-auto md:top-1/2",
           "md:w-full md:max-w-lg md:max-h-[85vh]",
           "md:-translate-x-1/2",
@@ -238,21 +238,21 @@ export function RatingModal({
                   value={newRef}
                   onChange={(e) => setNewRef(e.target.value)}
                   placeholder="Reference (e.g. 124060)"
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-base sm:text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
                   style={{ fontFamily: "var(--font-mono)" }}
                 />
                 <input
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Label (e.g. 41mm · Black · Bracelet)"
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-base sm:text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
                   style={{ fontFamily: "var(--font-sans)" }}
                 />
                 <input
                   value={newLink}
                   onChange={(e) => setNewLink(e.target.value)}
                   placeholder="Link (optional)"
-                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-base sm:text-[11px] text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors"
                   style={{ fontFamily: "var(--font-sans)" }}
                 />
                 <div className="flex items-center gap-3 pt-1">
@@ -299,14 +299,14 @@ export function RatingModal({
               onBlur={handleNotesBlur}
               placeholder="Add context, heritage, or your thoughts..."
               rows={4}
-              className="w-full bg-zinc-950 border border-zinc-800 px-3 py-2.5 text-sm text-[#FAF6EE] placeholder-zinc-600 focus:outline-none focus:border-[#b8973a]/50 transition-colors leading-relaxed resize-none"
+              className="w-full bg-zinc-950 border border-zinc-800 px-3 py-2.5 text-base sm:text-sm text-[#FAF6EE] placeholder-zinc-600 focus:outline-none focus:border-[#b8973a]/50 transition-colors leading-relaxed resize-none"
               style={{ fontFamily: "var(--font-sans)" }}
             />
           </section>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0">
+        <div className="flex items-center justify-end px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
           <button
             onClick={onClose}
             className="bg-[#F5E6C8] text-black px-6 py-2.5 text-[11px] font-medium tracking-widest uppercase hover:bg-[#FAF6EE] transition-colors"

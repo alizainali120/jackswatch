@@ -7,27 +7,19 @@ const PASSWORD = "wristcheck";
 const STORAGE_KEY = "jwg_unlocked";
 
 const QUOTES = [
-  "Time is money. You're about to spend both.",
-  "A man with one watch knows the time. A man with two watches knows Ali.",
-  "Your wrist called. It wants a Swiss accent.",
   "Ali spent hours on this. The least you can do is pick something.",
-  "Some people collect art. You're about to collect compliments.",
-  "Behind every great man is a greater watch.",
-  "Horological decisions are being made here.",
-  "No pressure. Just the rest of your wrist's life.",
-  "You don't need another watch. But here we are.",
-  "Patina is earned. This site was too.",
-  "42mm of pure confidence, incoming.",
-  "In-house movement? More like in-house excitement.",
+  "I am so excited to get a watch for Mr Gupta!",
+  "Make a cup of decaf coffee and shortlist some watches.",
+  "Time to watch some Teddy videos!",
+  "Assalam o Alaikum!"
 ];
 
 const ERROR_MESSAGES = [
   "Not even close, Jack.",
-  "Try again. Think watches.",
-  "The vault remains sealed.",
-  "Wrong combination.",
+  "WTF man!, Try again",
   "Ali is shaking his head somewhere.",
-  "Your watch is waiting. This password isn't it.",
+  "So dumb of you!",
+  "No wings for you!"
 ];
 
 function getGreeting(): string {
@@ -107,7 +99,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
         }}
       />
 
-      <div className={`relative w-full max-w-xs sm:max-w-[260px]${shaking ? " shake" : ""}`}>
+      <div className={`relative w-full max-w-[300px] sm:max-w-sm${shaking ? " shake" : ""}`}>
         <div className="flex justify-center mb-8">
           <div
             className="lock-icon-container w-12 h-12 flex items-center justify-center relative"
@@ -177,7 +169,7 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
                 fontFamily: "var(--font-mono)",
                 background: "#18181b",
                 border: inputBorder,
-                fontSize: "13px",
+                fontSize: "16px",
                 letterSpacing: "0.12em",
                 color: "#e4e4e7",
               }}

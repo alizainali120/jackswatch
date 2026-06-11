@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Mono, DM_Sans } from "next/font/google";
 import { PasswordGate } from "@/components/PasswordGate";
 import "./globals.css";
@@ -27,6 +27,13 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Jack's Watch Guide",
   description: "A curated selection for the AD floor.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

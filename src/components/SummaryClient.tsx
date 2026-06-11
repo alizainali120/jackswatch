@@ -113,7 +113,7 @@ export function SummaryClient() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#FAF6EE] print:bg-white print:text-black">
+    <div className="min-h-screen bg-black text-[#FAF6EE] print:bg-white print:text-black print:min-h-0">
       <div className="max-w-xl mx-auto px-4 py-8 print:py-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50 print:border-zinc-300">
@@ -172,7 +172,7 @@ export function SummaryClient() {
 
         {/* Footer — screen only */}
         {models.length > 0 && (
-          <div className="mt-10 pt-6 border-t border-zinc-800 flex justify-end print:hidden">
+          <div className="mt-10 pt-6 border-t border-zinc-800 flex justify-end print:hidden print:mt-0 print:pt-0">
             <p
               className="text-[11px] text-zinc-600"
               style={{ fontFamily: "var(--font-mono)" }}

@@ -102,7 +102,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
     `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`)
   );
 
-  const inputCls = "w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-sm text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors";
+  const inputCls = "w-full bg-zinc-950 border border-zinc-800 focus:border-[#b8973a]/50 px-3 py-2 text-base sm:text-sm text-[#FAF6EE] placeholder-zinc-600 focus:outline-none transition-colors";
   const tabCls = (active: boolean) => cn(
     "flex-1 py-2.5 text-[11px] uppercase tracking-[0.2em] transition-colors border-b-2",
     active
@@ -116,7 +116,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
       <div
         className={cn(
           "fixed z-50 flex flex-col bg-black",
-          "bottom-0 inset-x-0 max-h-[92vh]",
+          "bottom-0 inset-x-0 max-h-[80dvh]",
           "md:inset-x-auto md:left-1/2 md:bottom-auto md:top-1/2",
           "md:w-full md:max-w-lg md:max-h-[85vh]",
           "md:-translate-x-1/2",
@@ -266,7 +266,7 @@ export function AddWatchModal({ models, onClose, onAdd, onAddVariant }: AddWatch
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0">
+        <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-[#b8973a]/15 flex-shrink-0" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
           <button
             type="button"
             onClick={onClose}

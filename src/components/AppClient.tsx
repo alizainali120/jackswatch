@@ -5,7 +5,7 @@ import type { WatchModel, Reaction } from "@/types/watch";
 import { WatchRow } from "@/components/WatchRow";
 import { RatingModal } from "@/components/RatingModal";
 import { AddWatchModal } from "@/components/AddWatchModal";
-import { Watch as WatchIcon, Loader2, AlertCircle, Plus } from "lucide-react";
+import { Watch as WatchIcon, Loader2, AlertCircle, Plus, ChevronDown } from "lucide-react";
 import Link from "next/link";
 
 const ONBOARDING_KEY = "jacks-watch-onboarding-dismissed";
@@ -73,6 +73,12 @@ export function AppClient() {
   const [saving, setSaving] = useState(false);
   const [activeModelId, setActiveModelId] = useState<string | null>(null);
   const [addingWatch, setAddingWatch] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const COLLAPSE_THRESHOLD = 5;
+
+  function toggleSection(key: string) {
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
 
   useEffect(() => {
     fetch("/api/watches")
@@ -322,13 +328,18 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
         {/* RANKED section */}
         <section className="mb-8">
           <div className="px-4 pb-3 border-b border-[#b8973a]/20">
-            <div className="flex items-baseline justify-between">
+            <div className="flex items-center gap-2">
               <span
                 className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 Ranked
               </span>
+              {preferredModels.length > 0 && (
+                <span className="text-[10px] text-zinc-600 tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>
+                  {preferredModels.length}
+                </span>
+              )}
             </div>
           </div>
 
@@ -339,18 +350,33 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-800">
-              {preferredModels.map((model, i) => (
-                <WatchRow
-                  key={model.id}
-                  model={model}
-                  rank={i + 1}
-                  onRate={() => setActiveModelId(model.id)}
-                  onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                  onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
-                />
-              ))}
-            </div>
+            <>
+              <div className="divide-y divide-zinc-800">
+                {(expandedSections.ranked || preferredModels.length <= COLLAPSE_THRESHOLD
+                  ? preferredModels
+                  : preferredModels.slice(0, COLLAPSE_THRESHOLD)
+                ).map((model, i) => (
+                  <WatchRow
+                    key={model.id}
+                    model={model}
+                    rank={i + 1}
+                    onRate={() => setActiveModelId(model.id)}
+                    onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
+                    onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
+                  />
+                ))}
+              </div>
+              {preferredModels.length > COLLAPSE_THRESHOLD && (
+                <button
+                  onClick={() => toggleSection("ranked")}
+                  className="w-full py-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors border-b border-zinc-800"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  <ChevronDown size={12} className={expandedSections.ranked ? "rotate-180 transition-transform" : "transition-transform"} />
+                  {expandedSections.ranked ? "Show less" : `Show all ${preferredModels.length} watches`}
+                </button>
+              )}
+            </>
           )}
         </section>
 
@@ -358,15 +384,23 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
         {unranked.length > 0 && (
           <section className="mb-8">
             <div className="px-4 pb-3 border-b border-[#b8973a]/20">
-              <span
-                className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                Unranked
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  Unranked
+                </span>
+                <span className="text-[10px] text-zinc-600 tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>
+                  {unranked.length}
+                </span>
+              </div>
             </div>
             <div className="divide-y divide-zinc-800">
-              {unranked.map((model) => (
+              {(expandedSections.unranked || unranked.length <= COLLAPSE_THRESHOLD
+                ? unranked
+                : unranked.slice(0, COLLAPSE_THRESHOLD)
+              ).map((model) => (
                 <WatchRow
                   key={model.id}
                   model={model}
@@ -375,6 +409,16 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
                 />
               ))}
             </div>
+            {unranked.length > COLLAPSE_THRESHOLD && (
+              <button
+                onClick={() => toggleSection("unranked")}
+                className="w-full py-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors border-b border-zinc-800"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                <ChevronDown size={12} className={expandedSections.unranked ? "rotate-180 transition-transform" : "transition-transform"} />
+                {expandedSections.unranked ? "Show less" : `Show all ${unranked.length} watches`}
+              </button>
+            )}
           </section>
         )}
 
@@ -382,15 +426,23 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
         {passed.length > 0 && (
           <section>
             <div className="px-4 pb-3 border-b border-[#b8973a]/20">
-              <span
-                className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                Passed
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[11px] tracking-[0.25em] uppercase text-[#b8973a]"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  Passed
+                </span>
+                <span className="text-[10px] text-zinc-600 tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>
+                  {passed.length}
+                </span>
+              </div>
             </div>
             <div className="divide-y divide-zinc-800">
-              {passed.map((model) => (
+              {(expandedSections.passed || passed.length <= COLLAPSE_THRESHOLD
+                ? passed
+                : passed.slice(0, COLLAPSE_THRESHOLD)
+              ).map((model) => (
                 <WatchRow
                   key={model.id}
                   model={model}
@@ -400,6 +452,16 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
                 />
               ))}
             </div>
+            {passed.length > COLLAPSE_THRESHOLD && (
+              <button
+                onClick={() => toggleSection("passed")}
+                className="w-full py-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors border-b border-zinc-800"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                <ChevronDown size={12} className={expandedSections.passed ? "rotate-180 transition-transform" : "transition-transform"} />
+                {expandedSections.passed ? "Show less" : `Show all ${passed.length} watches`}
+              </button>
+            )}
           </section>
         )}
       </main>

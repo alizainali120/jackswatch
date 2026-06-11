@@ -140,7 +140,7 @@ export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed =
               )}
               <button
                 onClick={onRate}
-                className="border border-[#b8973a] text-[#b8973a] px-3 py-1 text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 transition-colors"
+                className="border border-[#b8973a] text-[#b8973a] px-3 py-1.5 sm:py-1 min-h-[36px] text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 active:bg-[#b8973a]/15 transition-colors"
                 style={{ fontFamily: "var(--font-sans)" }}
               >
                 Rate
