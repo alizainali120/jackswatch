@@ -11,7 +11,8 @@ const QUOTES = [
   "I am so excited to get a watch for Mr Gupta!",
   "Make a cup of decaf coffee and shortlist some watches.",
   "Time to watch some Teddy videos!",
-  "Assalam o Alaikum!"
+  "Assalam o Alaikum!",
+  "I asked ChatGPT and it said to get you atleast a Patek Philippe"
 ];
 
 const ERROR_MESSAGES = [
