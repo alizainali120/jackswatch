@@ -1,46 +1,103 @@
 "use client";
 
-import { ChevronUp, ChevronDown } from "lucide-react";
-import type { WatchModel, WatchVariant } from "@/types/watch";
-import { cn, getBrandGradient } from "@/lib/utils";
+import { useState } from "react";
+import { Check, X, Star, GripVertical, Pencil } from "lucide-react";
+import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
+import type { DragHandleProps } from "@/components/SortableList";
+import { cn } from "@/lib/utils";
 
-function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick: boolean }) {
+interface VariantLineProps {
+  variant: WatchVariant;
+  isTopPick: boolean;
+  canTopPick: boolean;
+  onReact: (reaction: Reaction | null) => void;
+  onToggleTopPick: () => void;
+}
+
+function IconToggle({
+  active,
+  onClick,
+  title,
+  activeClass,
+  children,
+  hidden,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  activeClass: string;
+  children: React.ReactNode;
+  hidden?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      aria-pressed={active}
+      className={cn(
+        "w-7 h-7 flex items-center justify-center border transition-colors flex-shrink-0",
+        active ? activeClass : "border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-300",
+        hidden && "invisible"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function VariantLine({ variant, isTopPick, canTopPick, onReact, onToggleTopPick }: VariantLineProps) {
   const isPassed = variant.reaction === "pass";
   const isPreferred = variant.reaction === "preferred";
-  const specs = variant.label || "";
 
   return (
-    <div className={cn("transition-opacity", isPassed && "opacity-35")}>
-      {/* Single line: ref (linked) · specs */}
-      <p className="text-[11px] leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
+    <div className={cn("flex items-center gap-2 py-0.5", isPassed && "opacity-40")}>
+      <div className="flex items-center gap-1">
+        <IconToggle
+          active={isPreferred}
+          onClick={() => onReact(isPreferred ? null : "preferred")}
+          title="Preferred"
+          activeClass="bg-emerald-500/15 border-emerald-500/60 text-emerald-400"
+        >
+          <Check size={13} strokeWidth={2.5} />
+        </IconToggle>
+        <IconToggle
+          active={isPassed}
+          onClick={() => onReact(isPassed ? null : "pass")}
+          title="Pass"
+          activeClass="bg-zinc-800 border-zinc-600 text-zinc-300"
+        >
+          <X size={13} strokeWidth={2.5} />
+        </IconToggle>
+        <IconToggle
+          active={isTopPick}
+          onClick={onToggleTopPick}
+          title="Top pick"
+          activeClass="bg-[#b8973a]/15 border-[#b8973a]/60 text-[#b8973a]"
+          hidden={!canTopPick}
+        >
+          <Star size={12} className={isTopPick ? "fill-[#b8973a]" : undefined} />
+        </IconToggle>
+      </div>
+
+      <p className="min-w-0 flex-1 text-[11px] leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
         {variant.link ? (
           <a
             href={variant.link}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
             className={cn(
-              "text-zinc-400 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
+              "text-zinc-300 hover:text-[#b8973a] transition-colors underline underline-offset-2 decoration-zinc-700",
               isPassed && "line-through"
             )}
           >
             {variant.reference}
           </a>
         ) : (
-          <span className={cn("text-zinc-400", isPassed && "line-through")}>
-            {variant.reference}
-          </span>
+          <span className={cn("text-zinc-300", isPassed && "line-through")}>{variant.reference}</span>
         )}
-        {specs && <span className="text-zinc-500"> · {specs}</span>}
-        {isPreferred && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 align-middle flex-shrink-0" />}
-        {isTopPick && (
-          <span
-            className="inline-block ml-1.5 px-1.5 py-0.5 text-[10px] uppercase tracking-widest border border-[#b8973a]/60 text-[#b8973a] align-middle leading-none"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            Top Pick
-          </span>
-        )}
+        {variant.label && <span className="text-zinc-500"> · {variant.label}</span>}
       </p>
     </div>
   );
@@ -49,136 +106,111 @@ function VariantLine({ variant, isTopPick }: { variant: WatchVariant; isTopPick:
 interface WatchRowProps {
   model: WatchModel;
   rank: number | null;
-  onRate: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  isPassed?: boolean;
+  onEdit: () => void;
+  onUpdateVariant: (variantId: string, reaction: Reaction | null) => void;
+  onSetTopPick: (variantId: string | null) => void;
+  dragHandle?: DragHandleProps;
+  isDragging?: boolean;
 }
 
-export function WatchRow({ model, rank, onRate, onMoveUp, onMoveDown, isPassed = false }: WatchRowProps) {
+export function WatchRow({ model, rank, onEdit, onUpdateVariant, onSetTopPick, dragHandle, isDragging }: WatchRowProps) {
+  const [showPassed, setShowPassed] = useState(false);
 
-  const gradient = getBrandGradient(model.brand);
+  const preferredCount = model.variants.filter((v) => v.reaction === "preferred").length;
+  const order = (v: WatchVariant) => {
+    if (v.id === model.topPickVariantId) return 0;
+    if (v.reaction === "preferred") return 1;
+    if (v.reaction === null) return 2;
+    return 3;
+  };
+  const sorted = [...model.variants].sort((a, b) => order(a) - order(b));
+  const active = sorted.filter((v) => v.reaction !== "pass");
+  const passed = sorted.filter((v) => v.reaction === "pass");
+  const visible = showPassed ? sorted : active;
 
   return (
-    <div className={cn("bg-black border-b border-zinc-900 py-3", isPassed && "opacity-50 saturate-0")}>
-      <div className="flex flex-row gap-0 px-2">
-
-        {/* ── Image thumbnail ─────────────────────────────────────────────── */}
-        <div className="relative flex-shrink-0 w-[90px] sm:w-[120px]">
-          <div
-            className={cn(
-              "overflow-hidden bg-gradient-to-b w-[90px] h-[90px] sm:w-[120px] sm:h-[120px]",
-              gradient
-            )}
+    <div className={cn("bg-black border-b border-zinc-900 py-2.5 pr-3", isDragging && "bg-zinc-950", !dragHandle && "pl-3")}>
+      {/* Header line */}
+      <div className="flex items-center gap-2">
+        {dragHandle && (
+          <button
+            type="button"
+            {...dragHandle}
+            aria-label="Drag to reorder"
+            className="pl-1.5 pr-0.5 py-1 text-zinc-600 hover:text-zinc-300 flex-shrink-0"
           >
-            {model.heroImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={model.heroImage}
-                alt=""
-                className="w-full h-full object-cover object-center"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span
-                  className="text-white/15 font-light text-2xl"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {model.brand[0]}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+            <GripVertical size={14} />
+          </button>
+        )}
+        {rank !== null && (
+          <span
+            className="text-[11px] text-[#b8973a] tabular-nums w-5 text-right flex-shrink-0"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            {rank}
+          </span>
+        )}
+        <button type="button" onClick={onEdit} className="min-w-0 flex-1 flex items-baseline gap-2 text-left">
+          <span
+            className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 flex-shrink-0"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            {model.brand}
+          </span>
+          <span
+            className="text-[15px] font-light text-[#FAF6EE] leading-tight truncate"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {model.name}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onEdit}
+          title="Notes & variants"
+          aria-label="Notes & variants"
+          className="text-zinc-600 hover:text-[#b8973a] transition-colors p-1 flex-shrink-0"
+        >
+          <Pencil size={13} />
+        </button>
+      </div>
 
-        {/* ── Content ────────────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 px-3 flex flex-col gap-1">
+      {/* Variants */}
+      <div className={cn("mt-1.5 space-y-1", dragHandle ? "pl-[46px]" : rank !== null ? "pl-7" : "")}>
+        {visible.map((v) => (
+          <VariantLine
+            key={v.id}
+            variant={v}
+            isTopPick={model.topPickVariantId === v.id}
+            canTopPick={v.reaction === "preferred" && preferredCount > 1}
+            onReact={(reaction) => onUpdateVariant(v.id, reaction)}
+            onToggleTopPick={() => onSetTopPick(model.topPickVariantId === v.id ? null : v.id)}
+          />
+        ))}
 
-          {/* Header: brand + name + rank widget */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p
-                className="text-[11px] uppercase tracking-[0.2em] text-zinc-400 font-medium"
+        {(passed.length > 0 || model.notes) && (
+          <div className="flex items-baseline gap-3 pt-0.5">
+            {passed.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPassed((s) => !s)}
+                className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                {model.brand}
-              </p>
-              <p
-                className="text-base font-light text-[#FAF6EE] leading-tight"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {model.name}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-              {rank !== null && (
-                <div className="flex items-center border border-zinc-700">
-                  <button
-                    onClick={onMoveUp}
-                    disabled={!onMoveUp}
-                    title="Move up"
-                    className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
-                  >
-                    <ChevronUp size={12} strokeWidth={2} />
-                  </button>
-                  <span
-                    className="text-[11px] font-medium text-zinc-200 tabular-nums border-l border-r border-zinc-700 px-2 py-1 text-center"
-                    style={{ fontFamily: "var(--font-mono)" }}
-                  >
-                    {rank}
-                  </span>
-                  <button
-                    onClick={onMoveDown}
-                    disabled={!onMoveDown}
-                    title="Move down"
-                    className="px-2 py-1 text-zinc-400 hover:text-[#b8973a] hover:bg-zinc-900 transition-all disabled:opacity-25 active:bg-zinc-800"
-                  >
-                    <ChevronDown size={12} strokeWidth={2} />
-                  </button>
-                </div>
-              )}
-              <button
-                onClick={onRate}
-                className="border border-[#b8973a] text-[#b8973a] px-3 py-1.5 sm:py-1 min-h-[36px] text-[11px] tracking-widest uppercase hover:bg-[#b8973a]/10 active:bg-[#b8973a]/15 transition-colors"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                Rate
+                {showPassed ? "Hide passed" : `${passed.length} passed`}
               </button>
-            </div>
-          </div>
-
-          {/* Separator */}
-          <div className="h-px bg-[#b8973a]/10" />
-
-          {/* Variant lines */}
-          <div className="space-y-1.5">
-            {[...model.variants]
-              .sort((a, b) => {
-                const order = (v: WatchVariant) => {
-                  if (v.id === model.topPickVariantId) return 0;
-                  if (v.reaction === "preferred") return 1;
-                  if (v.reaction === null) return 2;
-                  return 3;
-                };
-                return order(a) - order(b);
-              })
-              .map((v) => (
-                <VariantLine key={v.id} variant={v} isTopPick={model.topPickVariantId === v.id} />
-              ))}
-          </div>
-
-          {/* Footer: notes snippet */}
-          {model.notes && (
-            <>
-              <div className="h-px bg-[#b8973a]/10" />
-              <p className="text-[11px] text-[#FAF6EE]/50 italic leading-relaxed">
+            )}
+            {model.notes && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="min-w-0 text-left text-[11px] text-[#FAF6EE]/45 italic truncate hover:text-[#FAF6EE]/70 transition-colors"
+              >
                 {model.notes}
-              </p>
-            </>
-          )}
-
-        </div>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,68 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import type { WatchModel, Reaction } from "@/types/watch";
 import { WatchRow } from "@/components/WatchRow";
+import { SortableList } from "@/components/SortableList";
 import { RatingModal } from "@/components/RatingModal";
 import { AddWatchModal } from "@/components/AddWatchModal";
 import { Watch as WatchIcon, Loader2, AlertCircle, Plus, ChevronDown } from "lucide-react";
 import Link from "next/link";
-
-const ONBOARDING_KEY = "jacks-watch-onboarding-dismissed";
-
-function OnboardingCard() {
-  const [dismissed, setDismissed] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setDismissed(sessionStorage.getItem(ONBOARDING_KEY) === "true");
-  }, []);
-
-  function handleDismiss() {
-    sessionStorage.setItem(ONBOARDING_KEY, "true");
-    setDismissed(true);
-  }
-
-  if (dismissed !== false) return null;
-
-  return (
-    <div className="max-w-2xl mx-auto px-4 mb-6">
-      <div className="border border-zinc-800 bg-zinc-950 rounded-sm px-5 py-5">
-        <p
-          className="text-[11px] uppercase tracking-[0.3em] text-[#b8973a] mb-3"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          Jack&apos;s Watch Picks
-        </p>
-
-        <div className="space-y-3 mb-5">
-          <p className="text-[13px] text-zinc-300 leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
-            Rate each watch based purely on what you like - the color, dial, brand, or just what feels right. Ignore price entirely; this is a style guide, not a shopping list. I may end up getting a used piece or a similar style from a different brand.
-          </p>
-          <ul className="space-y-2">
-            <li className="text-[12px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
-              <span className="text-zinc-500 mr-1.5">01</span>
-              Mark each variant <span className="text-emerald-400">Preferred</span> or <span className="text-zinc-400">Pass</span>. Any watch with a Preferred variant moves into your Ranked list.
-            </li>
-            <li className="text-[12px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
-              <span className="text-zinc-500 mr-1.5">02</span>
-              In Ranked, drag watches into order from most to least favorite. If you marked more than one variant Preferred, pin your single top pick.
-            </li>
-            <li className="text-[12px] text-zinc-400 leading-snug" style={{ fontFamily: "var(--font-mono)" }}>
-              <span className="text-zinc-500 mr-1.5">03</span>
-              Add notes whenever something stands out — love the dial, hate the bracelet, size feels off. The more detail, the better I can match your style.
-            </li>
-          </ul>
-        </div>
-
-        <button
-          onClick={handleDismiss}
-          className="border border-[#b8973a] text-[#b8973a] text-[11px] tracking-widest uppercase px-4 py-2 hover:bg-[#b8973a]/10 transition-colors"
-          style={{ fontFamily: "var(--font-sans)" }}
-        >
-          Got it
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export function AppClient() {
   const [models, setModels] = useState<WatchModel[]>([]);
@@ -113,39 +56,22 @@ export function AppClient() {
 
   // ── Rank reordering ───────────────────────────────────────────────────────
 
-  const handleMoveUp = useCallback((modelId: string) => {
+  const handleReorder = useCallback((orderedIds: string[]) => {
     setModels((prev) => {
-      const sorted = prev.filter((m) => m.rank !== null).sort((a, b) => a.rank! - b.rank!);
-      const idx = sorted.findIndex((m) => m.id === modelId);
-      if (idx <= 0) return prev;
-      const reordered = [...sorted];
-      [reordered[idx - 1], reordered[idx]] = [reordered[idx], reordered[idx - 1]];
-      const withNewRanks = reordered.map((m, i) => ({ ...m, rank: i + 1 }));
+      // Keep any stale-ranked (no longer preferred) models after the visible order so ranks never collide.
+      const rest = prev
+        .filter((m) => m.rank !== null && !orderedIds.includes(m.id))
+        .sort((a, b) => a.rank! - b.rank!)
+        .map((m) => m.id);
+      const order = [...orderedIds, ...rest];
+      const rankOf = new Map(order.map((id, i) => [id, i + 1]));
       setSaving(true);
       fetch("/api/watches/rank", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: withNewRanks.map((m) => m.id) }),
+        body: JSON.stringify({ order }),
       }).catch(console.error).finally(() => setSaving(false));
-      return prev.map((m) => withNewRanks.find((r) => r.id === m.id) ?? m);
-    });
-  }, []);
-
-  const handleMoveDown = useCallback((modelId: string) => {
-    setModels((prev) => {
-      const sorted = prev.filter((m) => m.rank !== null).sort((a, b) => a.rank! - b.rank!);
-      const idx = sorted.findIndex((m) => m.id === modelId);
-      if (idx < 0 || idx >= sorted.length - 1) return prev;
-      const reordered = [...sorted];
-      [reordered[idx + 1], reordered[idx]] = [reordered[idx], reordered[idx + 1]];
-      const withNewRanks = reordered.map((m, i) => ({ ...m, rank: i + 1 }));
-      setSaving(true);
-      fetch("/api/watches/rank", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: withNewRanks.map((m) => m.id) }),
-      }).catch(console.error).finally(() => setSaving(false));
-      return prev.map((m) => withNewRanks.find((r) => r.id === m.id) ?? m);
+      return prev.map((m) => (rankOf.has(m.id) ? { ...m, rank: rankOf.get(m.id)! } : m));
     });
   }, []);
 
@@ -252,6 +178,12 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
     setAddingWatch(false);
   }, []);
 
+  const rowHandlers = (modelId: string) => ({
+    onEdit: () => setActiveModelId(modelId),
+    onUpdateVariant: (variantId: string, reaction: Reaction | null) => handleUpdateVariant(modelId, variantId, reaction),
+    onSetTopPick: (variantId: string | null) => handleSetTopPick(modelId, variantId),
+  });
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -318,12 +250,7 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
         </div>
       )}
 
-      {/* Onboarding card */}
-      <div className="pt-8">
-        <OnboardingCard />
-      </div>
-
-      <main className="max-w-2xl mx-auto pb-16">
+      <main className="max-w-2xl mx-auto pt-6 pb-16">
 
         {/* RANKED section */}
         <section className="mb-8">
@@ -350,33 +277,20 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
               </p>
             </div>
           ) : (
-            <>
-              <div className="divide-y divide-zinc-800">
-                {(expandedSections.ranked || preferredModels.length <= COLLAPSE_THRESHOLD
-                  ? preferredModels
-                  : preferredModels.slice(0, COLLAPSE_THRESHOLD)
-                ).map((model, i) => (
-                  <WatchRow
-                    key={model.id}
-                    model={model}
-                    rank={i + 1}
-                    onRate={() => setActiveModelId(model.id)}
-                    onMoveUp={i > 0 ? () => handleMoveUp(model.id) : undefined}
-                    onMoveDown={i < preferredModels.length - 1 ? () => handleMoveDown(model.id) : undefined}
-                  />
-                ))}
-              </div>
-              {preferredModels.length > COLLAPSE_THRESHOLD && (
-                <button
-                  onClick={() => toggleSection("ranked")}
-                  className="w-full py-3 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors border-b border-zinc-800"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  <ChevronDown size={12} className={expandedSections.ranked ? "rotate-180 transition-transform" : "transition-transform"} />
-                  {expandedSections.ranked ? "Show less" : `Show all ${preferredModels.length} watches`}
-                </button>
+            <SortableList
+              items={preferredModels}
+              getId={(m) => m.id}
+              onReorder={handleReorder}
+              renderItem={(model, i, handle, isDragging) => (
+                <WatchRow
+                  model={model}
+                  rank={i + 1}
+                  dragHandle={handle}
+                  isDragging={isDragging}
+                  {...rowHandlers(model.id)}
+                />
               )}
-            </>
+            />
           )}
         </section>
 
@@ -405,7 +319,7 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
                   key={model.id}
                   model={model}
                   rank={null}
-                  onRate={() => setActiveModelId(model.id)}
+                  {...rowHandlers(model.id)}
                 />
               ))}
             </div>
@@ -447,8 +361,7 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
                   key={model.id}
                   model={model}
                   rank={null}
-                  isPassed
-                  onRate={() => setActiveModelId(model.id)}
+                  {...rowHandlers(model.id)}
                 />
               ))}
             </div>
