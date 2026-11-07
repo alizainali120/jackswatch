@@ -9,12 +9,11 @@ import { cn } from "@/lib/utils";
 interface VariantBlockProps {
   variant: WatchVariant;
   isTopPick: boolean;
-  preferredCount: number;
   onReact: (reaction: Reaction | null) => void;
   onSetTopPick: () => void;
 }
 
-function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPick }: VariantBlockProps) {
+function VariantBlock({ variant, isTopPick, onReact, onSetTopPick }: VariantBlockProps) {
   const isPreferred = variant.reaction === "preferred";
   const isPassed = variant.reaction === "pass";
 
@@ -78,24 +77,22 @@ function VariantBlock({ variant, isTopPick, preferredCount, onReact, onSetTopPic
           ✕ Pass
         </button>
 
-        {isPreferred && preferredCount > 1 && (
-          <button
-            onClick={onSetTopPick}
-            className={cn(
-              "flex items-center gap-1 px-3 py-2 border text-[11px] transition-all ml-auto",
-              isTopPick
-                ? "bg-[#b8973a]/15 border-[#b8973a]/50 text-[#b8973a]"
-                : "border-zinc-800 text-zinc-600 hover:border-[#b8973a]/30 hover:text-[#b8973a]/60"
-            )}
-            style={{ fontFamily: "var(--font-sans)" }}
-          >
-            <Star
-              size={10}
-              className={isTopPick ? "fill-[#b8973a] text-[#b8973a]" : "text-zinc-600"}
-            />
-            Top Pick
-          </button>
-        )}
+        <button
+          onClick={onSetTopPick}
+          className={cn(
+            "flex items-center gap-1 px-3 py-2 border text-[11px] transition-all ml-auto",
+            isTopPick
+              ? "bg-[#b8973a]/15 border-[#b8973a]/50 text-[#b8973a]"
+              : "border-zinc-800 text-zinc-600 hover:border-[#b8973a]/30 hover:text-[#b8973a]/60"
+          )}
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          <Star
+            size={10}
+            className={isTopPick ? "fill-[#b8973a] text-[#b8973a]" : "text-zinc-600"}
+          />
+          Top Pick
+        </button>
       </div>
     </div>
   );
@@ -216,16 +213,17 @@ export function RatingModal({
                   key={v.id}
                   variant={v}
                   isTopPick={model.topPickVariantId === v.id}
-                  preferredCount={model.variants.filter((x) => x.reaction === "preferred").length}
                   onReact={(reaction) => {
                     if (v.reaction === "preferred" && reaction !== "preferred" && model.topPickVariantId === v.id) {
                       onSetTopPick(null);
                     }
                     onUpdateVariant(v.id, reaction);
                   }}
-                  onSetTopPick={() =>
-                    onSetTopPick(model.topPickVariantId === v.id ? null : v.id)
-                  }
+                  onSetTopPick={() => {
+                    if (model.topPickVariantId === v.id) return onSetTopPick(null);
+                    if (v.reaction !== "preferred") onUpdateVariant(v.id, "preferred");
+                    onSetTopPick(v.id);
+                  }}
                 />
               ))}
             </div>

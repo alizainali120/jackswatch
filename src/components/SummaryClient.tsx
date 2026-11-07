@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { WatchModel } from "@/types/watch";
 import { cn } from "@/lib/utils";
+import { getRankedModels } from "@/lib/ranking";
 import { Printer, Loader2, Watch as WatchIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -43,7 +44,8 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
               {preferred.map((v) => {
                 const isTopPick = v.id === model.topPickVariantId;
                 return (
-                  <div key={v.id} className="flex items-baseline gap-1.5">
+                  <div key={v.id}>
+                  <div className="flex items-baseline gap-1.5">
                     <span
                       className={cn(
                         "text-[11px] leading-relaxed",
@@ -72,9 +74,20 @@ function ModelSummaryRow({ model, rank }: { model: WatchModel; rank: number }) {
                       </span>
                     )}
                   </div>
+                  {v.notes && (
+                    <p className="text-[11px] italic text-zinc-500 print:text-zinc-600 leading-snug pl-3">
+                      {v.notes}
+                    </p>
+                  )}
+                  </div>
                 );
               })}
             </div>
+          )}
+          {model.notes && (
+            <p className="mt-1.5 text-[11px] italic text-zinc-400 print:text-zinc-700 leading-snug">
+              {model.notes}
+            </p>
           )}
         </div>
       </div>
@@ -90,10 +103,7 @@ export function SummaryClient() {
     fetch("/api/watches")
       .then((r) => r.json())
       .then((data: WatchModel[]) => {
-        const rated = data
-          .filter((m) => m.variants.some((v) => v.reaction !== null))
-          .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
-        setModels(rated);
+        setModels(getRankedModels(data));
         setLoading(false);
       })
       .catch(() => setLoading(false));

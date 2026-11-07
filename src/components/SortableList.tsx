@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from "react";
 
 export interface DragHandleProps {
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
@@ -11,6 +11,7 @@ interface DragState {
   fromIndex: number;
   overIndex: number;
   startPageY: number;
+  startClientY: number;
   dy: number;
   tops: number[];
   heights: number[];
@@ -27,63 +28,61 @@ interface SortableListProps<T> {
 const EDGE = 72;
 const MAX_SCROLL_SPEED = 14;
 
+function computeOver(d: DragState, dy: number): number {
+  const { fromIndex, tops, heights } = d;
+  const center = tops[fromIndex] + heights[fromIndex] / 2 + dy;
+  let over = fromIndex;
+  for (let i = fromIndex + 1; i < tops.length; i++) {
+    if (center > tops[i] + heights[i] / 2) over = i;
+  }
+  for (let i = fromIndex - 1; i >= 0; i--) {
+    if (center < tops[i] + heights[i] / 2) over = i;
+  }
+  return over;
+}
+
 export function SortableList<T>({ items, getId, onReorder, renderItem, className }: SortableListProps<T>) {
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // `start` is set once when a drag begins; `drag` is the live position used for rendering.
+  const [start, setStart] = useState<DragState | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
-  const dragRef = useRef<DragState | null>(null);
-  const lastClientY = useRef(0);
-
-  function computeOver(d: DragState, dy: number): number {
-    const { fromIndex, tops, heights } = d;
-    const center = tops[fromIndex] + heights[fromIndex] / 2 + dy;
-    let over = fromIndex;
-    for (let i = fromIndex + 1; i < tops.length; i++) {
-      if (center > tops[i] + heights[i] / 2) over = i;
-    }
-    for (let i = fromIndex - 1; i >= 0; i--) {
-      if (center < tops[i] + heights[i] / 2) over = i;
-    }
-    return over;
-  }
-
-  function update(clientY: number) {
-    const d = dragRef.current;
-    if (!d) return;
-    const dy = clientY + window.scrollY - d.startPageY;
-    const next = { ...d, dy, overIndex: computeOver(d, dy) };
-    dragRef.current = next;
-    setDrag(next);
-  }
 
   useEffect(() => {
-    if (!drag) return;
+    if (!start) return;
+
+    let current = start;
+    let lastClientY = start.startClientY;
+
+    const update = () => {
+      const dy = lastClientY + window.scrollY - current.startPageY;
+      current = { ...current, dy, overIndex: computeOver(current, dy) };
+      setDrag(current);
+    };
 
     let raf = 0;
     const tick = () => {
-      const y = lastClientY.current;
+      const y = lastClientY;
       let speed = 0;
       if (y < EDGE) speed = -MAX_SCROLL_SPEED * (1 - y / EDGE);
       else if (y > window.innerHeight - EDGE) speed = MAX_SCROLL_SPEED * (1 - (window.innerHeight - y) / EDGE);
       if (speed !== 0) {
         window.scrollBy(0, speed);
-        update(y);
+        update();
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
 
     const onMove = (e: PointerEvent) => {
-      lastClientY.current = e.clientY;
-      update(e.clientY);
+      lastClientY = e.clientY;
+      update();
     };
     const onUp = () => {
-      const d = dragRef.current;
-      dragRef.current = null;
+      setStart(null);
       setDrag(null);
-      if (d && d.overIndex !== d.fromIndex) {
+      if (current.overIndex !== current.fromIndex) {
         const ids = items.map(getId);
-        const [moved] = ids.splice(d.fromIndex, 1);
-        ids.splice(d.overIndex, 0, moved);
+        const [moved] = ids.splice(current.fromIndex, 1);
+        ids.splice(current.overIndex, 0, moved);
         onReorder(ids);
       }
     };
@@ -97,24 +96,28 @@ export function SortableList<T>({ items, getId, onReorder, renderItem, className
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-    // Re-bind only when a drag starts/ends, not on every move.
+    // Bind once per drag; items/handlers are stable for its duration.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drag !== null]);
+  }, [start]);
 
   function startDrag(index: number, e: ReactPointerEvent<HTMLElement>) {
     if (e.button !== 0) return;
     e.preventDefault();
-    const rects = itemRefs.current.slice(0, items.length).map((el) => el?.getBoundingClientRect());
+    const list = e.currentTarget.closest("[data-sortable-list]");
+    if (!list) return;
+    const rects = Array.from(list.querySelectorAll(":scope > [data-sortable-item]")).map((el) =>
+      el.getBoundingClientRect()
+    );
     const d: DragState = {
       fromIndex: index,
       overIndex: index,
       startPageY: e.clientY + window.scrollY,
+      startClientY: e.clientY,
       dy: 0,
-      tops: rects.map((r) => (r ? r.top + window.scrollY : 0)),
-      heights: rects.map((r) => r?.height ?? 0),
+      tops: rects.map((r) => r.top + window.scrollY),
+      heights: rects.map((r) => r.height),
     };
-    lastClientY.current = e.clientY;
-    dragRef.current = d;
+    setStart(d);
     setDrag(d);
   }
 
@@ -129,13 +132,13 @@ export function SortableList<T>({ items, getId, onReorder, renderItem, className
   }
 
   return (
-    <div className={className} style={drag ? { userSelect: "none" } : undefined}>
+    <div data-sortable-list className={className} style={drag ? { userSelect: "none" } : undefined}>
       {items.map((item, i) => {
         const isDragging = drag?.fromIndex === i;
         return (
           <div
             key={getId(item)}
-            ref={(el) => { itemRefs.current[i] = el; }}
+            data-sortable-item
             className={isDragging ? "relative z-20 shadow-[0_8px_30px_rgba(0,0,0,0.8)]" : "relative"}
             style={{
               transform: `translateY(${offsetFor(i)}px)`,

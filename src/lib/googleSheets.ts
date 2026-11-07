@@ -31,13 +31,14 @@ async function client() {
 // "models"  : A=id  B=brand  C=name  D=heroImage  E=notes  F=rank
 //             G=topPickVariantId
 // "variants": A=id  B=modelId  C=reference  D=label  E=link  F=reaction
+//             G=notes
 // To reseed: clear data rows (not header) in both tabs.
 
 const MODELS_TAB = "models";
 const VARIANTS_TAB = "variants";
 
 const MODELS_HEADERS = ["id", "brand", "name", "heroImage", "notes", "rank", "topPickVariantId"];
-const VARIANTS_HEADERS = ["id", "modelId", "reference", "label", "link", "reaction"];
+const VARIANTS_HEADERS = ["id", "modelId", "reference", "label", "link", "reaction", "notes"];
 
 async function ensureTab(
   sheets: Awaited<ReturnType<typeof client>>,
@@ -104,6 +105,7 @@ function rowToVariant(row: string[]): WatchVariant {
     label: row[3] ?? "",
     link: row[4] || undefined,
     reaction: (row[5] as Reaction) || null,
+    notes: row[6] ?? "",
   };
 }
 
@@ -115,7 +117,7 @@ function modelToRow(m: Omit<WatchModel, "variants">): string[] {
 }
 
 function variantToRow(v: WatchVariant): string[] {
-  return [v.id, v.modelId, v.reference, v.label, v.link ?? "", v.reaction ?? ""];
+  return [v.id, v.modelId, v.reference, v.label, v.link ?? "", v.reaction ?? "", v.notes ?? ""];
 }
 
 export async function getAllModels(): Promise<WatchModel[]> {
@@ -125,7 +127,7 @@ export async function getAllModels(): Promise<WatchModel[]> {
 
   const [modelsRes, variantsRes] = await Promise.all([
     sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${MODELS_TAB}!A:G` }),
-    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:F` }),
+    sheets.spreadsheets.values.get({ spreadsheetId: sheetId(), range: `${VARIANTS_TAB}!A:G` }),
   ]);
 
   const modelRows = (modelsRes.data.values ?? []).slice(1).filter((r) => r[0]);
@@ -143,7 +145,7 @@ export async function getAllModels(): Promise<WatchModel[]> {
       }),
       sheets.spreadsheets.values.append({
         spreadsheetId: sheetId(),
-        range: `${VARIANTS_TAB}!A:F`,
+        range: `${VARIANTS_TAB}!A:G`,
         valueInputOption: "RAW",
         requestBody: { values: allVariantRows },
       }),
@@ -212,6 +214,18 @@ export async function updateVariantReaction(id: string, reaction: Reaction | nul
   });
 }
 
+export async function updateVariantNotes(id: string, notes: string): Promise<void> {
+  const sheets = await client();
+  const rowIdx = await findRowIndex(sheets, VARIANTS_TAB, id);
+  if (rowIdx === null) return;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${VARIANTS_TAB}!G${rowIdx}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[notes]] },
+  });
+}
+
 export async function updateModelRank(id: string, rank: number | null): Promise<void> {
   const sheets = await client();
   const rowIdx = await findRowIndex(sheets, MODELS_TAB, id);
@@ -261,7 +275,7 @@ export async function createModel(
     }),
     sheets.spreadsheets.values.append({
       spreadsheetId: sheetId(),
-      range: `${VARIANTS_TAB}!A:F`,
+      range: `${VARIANTS_TAB}!A:G`,
       valueInputOption: "RAW",
       requestBody: { values: newModel.variants.map(variantToRow) },
     }),
@@ -285,7 +299,7 @@ export async function createVariant(
   };
   await sheets.spreadsheets.values.append({
     spreadsheetId: sheetId(),
-    range: `${VARIANTS_TAB}!A:F`,
+    range: `${VARIANTS_TAB}!A:G`,
     valueInputOption: "RAW",
     requestBody: { values: [variantToRow(variant)] },
   });

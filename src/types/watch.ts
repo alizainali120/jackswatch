@@ -7,6 +7,7 @@ export interface WatchVariant {
   label: string;
   link?: string;
   reaction: Reaction | null;
+  notes?: string;
 }
 
 export interface WatchModel {

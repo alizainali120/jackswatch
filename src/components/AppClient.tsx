@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { WatchModel, Reaction } from "@/types/watch";
 import { WatchRow } from "@/components/WatchRow";
+import { getRankedModels } from "@/lib/ranking";
 import { SortableList } from "@/components/SortableList";
 import { RatingModal } from "@/components/RatingModal";
 import { AddWatchModal } from "@/components/AddWatchModal";
@@ -33,14 +34,7 @@ export function AppClient() {
       .catch(() => { setError("Couldn't reach the server."); setLoading(false); });
   }, []);
 
-  const preferredModels = models
-    .filter((m) => m.variants.some((v) => v.reaction === "preferred"))
-    .sort((a, b) => {
-      if (a.rank !== null && b.rank !== null) return a.rank - b.rank;
-      if (a.rank !== null) return -1;
-      if (b.rank !== null) return 1;
-      return 0;
-    });
+  const preferredModels = getRankedModels(models);
   const passed = models.filter(
     (m) =>
       m.variants.length > 0 &&
@@ -82,11 +76,9 @@ export function AppClient() {
       const updatedModels = prev.map((m) => {
         if (m.id !== modelId) return m;
         const updatedVariants = m.variants.map((v) => v.id === variantId ? { ...v, reaction } : v);
-        const preferredCount = updatedVariants.filter((v) => v.reaction === "preferred").length;
-        const shouldClearTopPick = m.topPickVariantId !== null && (
-          (reaction !== "preferred" && m.topPickVariantId === variantId) ||
-          preferredCount <= 1
-        );
+        // A top pick must stay preferred; un-preferring it clears the pick.
+        const shouldClearTopPick =
+          m.topPickVariantId === variantId && reaction !== "preferred";
         if (shouldClearTopPick) {
           fetch(`/api/watches/${modelId}`, {
             method: "PUT",
@@ -158,6 +150,19 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
     }).catch(console.error).finally(() => setSaving(false));
   }, []);
 
+  const handleUpdateVariantNotes = useCallback((modelId: string, variantId: string, notes: string) => {
+    setModels((prev) => prev.map((m) => m.id !== modelId ? m : {
+      ...m,
+      variants: m.variants.map((v) => v.id === variantId ? { ...v, notes } : v),
+    }));
+    setSaving(true);
+    fetch(`/api/variants/${variantId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes }),
+    }).catch(console.error).finally(() => setSaving(false));
+  }, []);
+
   const handleModalClose = useCallback(() => {
     setActiveModelId(null);
   }, []);
@@ -182,6 +187,8 @@ const handleAddVariant = useCallback(async (modelId: string, reference: string, 
     onEdit: () => setActiveModelId(modelId),
     onUpdateVariant: (variantId: string, reaction: Reaction | null) => handleUpdateVariant(modelId, variantId, reaction),
     onSetTopPick: (variantId: string | null) => handleSetTopPick(modelId, variantId),
+    onUpdateVariantNotes: (variantId: string, notes: string) => handleUpdateVariantNotes(modelId, variantId, notes),
+    onUpdateNotes: (notes: string) => handleUpdateNotes(modelId, notes),
   });
 
   // ── Render ────────────────────────────────────────────────────────────────

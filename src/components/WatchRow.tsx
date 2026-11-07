@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, Star, GripVertical, Pencil } from "lucide-react";
+import { Check, X, Star, GripVertical, Pencil, MessageSquare, Plus } from "lucide-react";
 import type { WatchModel, WatchVariant, Reaction } from "@/types/watch";
 import type { DragHandleProps } from "@/components/SortableList";
+import { InlineNote } from "@/components/InlineNote";
 import { cn } from "@/lib/utils";
 
 interface VariantLineProps {
   variant: WatchVariant;
   isTopPick: boolean;
-  canTopPick: boolean;
   onReact: (reaction: Reaction | null) => void;
   onToggleTopPick: () => void;
+  onSaveNotes: (notes: string) => void;
 }
 
 function IconToggle({
@@ -20,14 +21,12 @@ function IconToggle({
   title,
   activeClass,
   children,
-  hidden,
 }: {
   active: boolean;
   onClick: () => void;
   title: string;
   activeClass: string;
   children: React.ReactNode;
-  hidden?: boolean;
 }) {
   return (
     <button
@@ -38,8 +37,7 @@ function IconToggle({
       aria-pressed={active}
       className={cn(
         "w-7 h-7 flex items-center justify-center border transition-colors flex-shrink-0",
-        active ? activeClass : "border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-300",
-        hidden && "invisible"
+        active ? activeClass : "border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-300"
       )}
     >
       {children}
@@ -47,12 +45,15 @@ function IconToggle({
   );
 }
 
-function VariantLine({ variant, isTopPick, canTopPick, onReact, onToggleTopPick }: VariantLineProps) {
+function VariantLine({ variant, isTopPick, onReact, onToggleTopPick, onSaveNotes }: VariantLineProps) {
   const isPassed = variant.reaction === "pass";
   const isPreferred = variant.reaction === "preferred";
+  const [editing, setEditing] = useState(false);
+  const notes = variant.notes ?? "";
 
   return (
-    <div className={cn("flex items-center gap-2 py-0.5", isPassed && "opacity-40")}>
+    <div className={cn("py-0.5", isPassed && "opacity-40")}>
+    <div className="flex items-center gap-2">
       <div className="flex items-center gap-1">
         <IconToggle
           active={isPreferred}
@@ -75,7 +76,6 @@ function VariantLine({ variant, isTopPick, canTopPick, onReact, onToggleTopPick 
           onClick={onToggleTopPick}
           title="Top pick"
           activeClass="bg-[#b8973a]/15 border-[#b8973a]/60 text-[#b8973a]"
-          hidden={!canTopPick}
         >
           <Star size={12} className={isTopPick ? "fill-[#b8973a]" : undefined} />
         </IconToggle>
@@ -99,6 +99,42 @@ function VariantLine({ variant, isTopPick, canTopPick, onReact, onToggleTopPick 
         )}
         {variant.label && <span className="text-zinc-500"> · {variant.label}</span>}
       </p>
+
+      <button
+        type="button"
+        onClick={() => setEditing((e) => !e)}
+        title={notes ? "Edit comment" : "Add comment"}
+        aria-label={notes ? "Edit comment" : "Add comment"}
+        className={cn(
+          "p-1 flex-shrink-0 transition-colors",
+          notes ? "text-[#b8973a]/80 hover:text-[#b8973a]" : "text-zinc-700 hover:text-zinc-300"
+        )}
+      >
+        <MessageSquare size={12} className={notes ? "fill-[#b8973a]/20" : undefined} />
+      </button>
+    </div>
+
+    {/* Comment: indented under the reference text (3 toggles × 28px + gaps) */}
+    {(editing || notes) && (
+      <div className="pl-[100px] pr-6 mt-1">
+        {editing ? (
+          <InlineNote
+            value={notes}
+            placeholder="Comment on this variant…"
+            onSave={onSaveNotes}
+            onClose={() => setEditing(false)}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-left text-[11px] text-[#FAF6EE]/55 italic leading-snug hover:text-[#FAF6EE]/80 transition-colors"
+          >
+            {notes}
+          </button>
+        )}
+      </div>
+    )}
     </div>
   );
 }
@@ -109,14 +145,26 @@ interface WatchRowProps {
   onEdit: () => void;
   onUpdateVariant: (variantId: string, reaction: Reaction | null) => void;
   onSetTopPick: (variantId: string | null) => void;
+  onUpdateVariantNotes: (variantId: string, notes: string) => void;
+  onUpdateNotes: (notes: string) => void;
   dragHandle?: DragHandleProps;
   isDragging?: boolean;
 }
 
-export function WatchRow({ model, rank, onEdit, onUpdateVariant, onSetTopPick, dragHandle, isDragging }: WatchRowProps) {
+export function WatchRow({
+  model,
+  rank,
+  onEdit,
+  onUpdateVariant,
+  onSetTopPick,
+  onUpdateVariantNotes,
+  onUpdateNotes,
+  dragHandle,
+  isDragging,
+}: WatchRowProps) {
   const [showPassed, setShowPassed] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
 
-  const preferredCount = model.variants.filter((v) => v.reaction === "preferred").length;
   const order = (v: WatchVariant) => {
     if (v.id === model.topPickVariantId) return 0;
     if (v.reaction === "preferred") return 1;
@@ -182,35 +230,60 @@ export function WatchRow({ model, rank, onEdit, onUpdateVariant, onSetTopPick, d
             key={v.id}
             variant={v}
             isTopPick={model.topPickVariantId === v.id}
-            canTopPick={v.reaction === "preferred" && preferredCount > 1}
             onReact={(reaction) => onUpdateVariant(v.id, reaction)}
-            onToggleTopPick={() => onSetTopPick(model.topPickVariantId === v.id ? null : v.id)}
+            onToggleTopPick={() => {
+              if (model.topPickVariantId === v.id) return onSetTopPick(null);
+              // Starring implies preferred.
+              if (v.reaction !== "preferred") onUpdateVariant(v.id, "preferred");
+              onSetTopPick(v.id);
+            }}
+            onSaveNotes={(notes) => onUpdateVariantNotes(v.id, notes)}
           />
         ))}
 
-        {(passed.length > 0 || model.notes) && (
-          <div className="flex items-baseline gap-3 pt-0.5">
-            {passed.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowPassed((s) => !s)}
-                className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                {showPassed ? "Hide passed" : `${passed.length} passed`}
-              </button>
-            )}
-            {model.notes && (
-              <button
-                type="button"
-                onClick={onEdit}
-                className="min-w-0 text-left text-[11px] text-[#FAF6EE]/45 italic truncate hover:text-[#FAF6EE]/70 transition-colors"
-              >
-                {model.notes}
-              </button>
-            )}
+        {/* General comment for the whole watch */}
+        {editingNotes ? (
+          <div className="pt-1">
+            <InlineNote
+              value={model.notes}
+              placeholder="General comment on this watch…"
+              onSave={onUpdateNotes}
+              onClose={() => setEditingNotes(false)}
+            />
           </div>
-        )}
+        ) : model.notes ? (
+          <button
+            type="button"
+            onClick={() => setEditingNotes(true)}
+            className="block w-full text-left mt-1 pl-2 border-l border-[#b8973a]/30 text-[11px] text-[#FAF6EE]/55 italic leading-snug hover:text-[#FAF6EE]/80 transition-colors"
+          >
+            {model.notes}
+          </button>
+        ) : null}
+
+        <div className="flex items-baseline gap-4 pt-0.5">
+          {!model.notes && !editingNotes && (
+            <button
+              type="button"
+              onClick={() => setEditingNotes(true)}
+              className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              <Plus size={10} />
+              General comment
+            </button>
+          )}
+          {passed.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowPassed((s) => !s)}
+              className="text-[10px] text-zinc-600 hover:text-zinc-300 transition-colors"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              {showPassed ? "Hide passed" : `${passed.length} passed`}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
